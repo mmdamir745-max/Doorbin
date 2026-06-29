@@ -4,10 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>وب‌اپ عکس با کد ملی</title>
-    <!-- JSZip برای ساخت فایل ZIP -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <!-- jsPDF برای ساخت فایل PDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -34,8 +30,6 @@
             padding: 24px 20px 30px;
             box-shadow: 0 25px 50px -8px rgba(0,0,0,0.8);
             border: 1px solid #334155;
-            transition: all 0.2s;
-            backdrop-filter: blur(2px);
         }
         .header {
             display: flex;
@@ -47,7 +41,6 @@
         .header h1 {
             font-size: 22px;
             font-weight: 700;
-            letter-spacing: -0.5px;
             background: linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -67,7 +60,6 @@
             font-size: 12px;
             font-weight: 600;
             color: white;
-            letter-spacing: 0.3px;
             border: 1px solid #3b82f6;
         }
         .camera-frame {
@@ -119,37 +111,22 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.3);
             cursor: pointer;
             border: 1px solid #475569;
-            letter-spacing: 0.3px;
             touch-action: manipulation;
             user-select: none;
         }
-        .btn:active {
-            transform: scale(0.94);
-        }
+        .btn:active { transform: scale(0.94); }
         .btn-primary {
             background: #2563eb;
             border-color: #3b82f6;
             color: white;
         }
         .btn-primary:active { background: #1d4ed8; }
-        .btn-success {
-            background: #16a34a;
-            border-color: #22c55e;
-            color: white;
-        }
-        .btn-success:active { background: #15803d; }
         .btn-danger {
             background: #dc2626;
             border-color: #ef4444;
             color: white;
         }
         .btn-danger:active { background: #b91c1c; }
-        .btn-outline {
-            background: transparent;
-            border: 1.5px solid #475569;
-            color: #cbd5e1;
-        }
-        .btn-outline:active { background: #1e293b; }
         .btn:disabled {
             opacity: 0.4;
             transform: scale(0.96);
@@ -168,6 +145,12 @@
             color: white;
         }
         .btn-download-pdf:active { background: #b91c1c; }
+        .btn-download-jpg {
+            background: #16a34a;
+            border-color: #22c55e;
+            color: white;
+        }
+        .btn-download-jpg:active { background: #15803d; }
         .input-section {
             margin: 18px 0 12px;
             display: flex;
@@ -249,18 +232,11 @@
             border-color: #3b82f6;
             background: #0f1a2e;
         }
-        .action-row {
-            display: flex;
-            gap: 12px;
-            margin-top: 4px;
-        }
-        .action-row .btn {
-            flex: 1;
-        }
         .download-row {
             display: flex;
             gap: 10px;
             margin-top: 8px;
+            flex-wrap: wrap;
         }
         .download-row .btn {
             flex: 1;
@@ -273,7 +249,6 @@
             font-size: 12px;
             color: #475569;
             margin-top: 16px;
-            letter-spacing: 0.2px;
             border-top: 1px solid #1e293b;
             padding-top: 16px;
         }
@@ -287,21 +262,16 @@
 </head>
 <body>
 <div class="app-container" role="main">
-    <!-- هدر -->
     <div class="header">
-        <h1>
-            <span>📸</span> کد ملی
-        </h1>
+        <h1><span>📸</span> کد ملی</h1>
         <div class="badge">iPhone</div>
     </div>
 
-    <!-- دوربین / کانواس -->
     <div class="camera-frame">
         <video id="video" autoplay playsinline muted></video>
         <canvas id="photoCanvas"></canvas>
     </div>
 
-    <!-- ورودی کد ملی -->
     <div class="input-section">
         <label for="nationalCode">
             🇮🇷 کد ملی (۱۰ رقم)
@@ -310,19 +280,17 @@
         <input type="text" id="nationalCode" class="input-field" inputmode="numeric" maxlength="10" placeholder="۱۲۳۴۵۶۷۸۹۰" value="" autocomplete="off">
     </div>
 
-    <!-- وضعیت -->
     <div id="statusMessage" class="status-bar info">📱 درخواست دسترسی به دوربین...</div>
 
-    <!-- دکمه‌های اصلی -->
     <div class="controls-grid">
         <button id="captureBtn" class="btn btn-primary">📸 عکس بگیر</button>
         <button id="retakeBtn" class="btn btn-danger" disabled>🔄 دوباره</button>
     </div>
 
-    <!-- دکمه‌های دانلود (ZIP و PDF) -->
     <div class="download-row">
-        <button id="downloadZipBtn" class="btn btn-download-zip" disabled>📦 دانلود ZIP</button>
-        <button id="downloadPdfBtn" class="btn btn-download-pdf" disabled>📄 دانلود PDF</button>
+        <button id="downloadJpgBtn" class="btn btn-download-jpg" disabled>🖼️ JPG</button>
+        <button id="downloadZipBtn" class="btn btn-download-zip" disabled>📦 ZIP</button>
+        <button id="downloadPdfBtn" class="btn btn-download-pdf" disabled>📄 PDF</button>
     </div>
 
     <div class="footer-note">
@@ -334,7 +302,6 @@
     (function() {
         "use strict";
 
-        // ---- عناصر DOM ----
         const video = document.getElementById('video');
         const canvas = document.getElementById('photoCanvas');
         const ctx = canvas.getContext('2d');
@@ -342,17 +309,16 @@
         const statusDiv = document.getElementById('statusMessage');
         const captureBtn = document.getElementById('captureBtn');
         const retakeBtn = document.getElementById('retakeBtn');
+        const downloadJpgBtn = document.getElementById('downloadJpgBtn');
         const downloadZipBtn = document.getElementById('downloadZipBtn');
         const downloadPdfBtn = document.getElementById('downloadPdfBtn');
 
-        // ---- state ----
         let mediaStream = null;
         let isCameraActive = false;
         let isPhotoTaken = false;
         let photoDataURL = null;
         let cameraStarted = false;
 
-        // ---- helpers ----
         function setStatus(msg, type = 'info') {
             statusDiv.textContent = msg;
             statusDiv.className = 'status-bar';
@@ -381,7 +347,6 @@
             return code;
         }
 
-        // ---- راه‌اندازی دوربین ----
         async function startCamera() {
             try {
                 setStatus('📷 در حال دسترسی به دوربین...', 'info');
@@ -415,23 +380,24 @@
 
                 captureBtn.disabled = false;
                 retakeBtn.disabled = true;
+                downloadJpgBtn.disabled = true;
                 downloadZipBtn.disabled = true;
                 downloadPdfBtn.disabled = true;
 
                 setStatus('✅ دوربین آماده است. عکس بگیرید.', 'success');
             } catch (err) {
                 console.error('دوربین خطا:', err);
-                setStatus('❌ دسترسی به دوربین ممکن نیست. (اجازه دسترسی را بررسی کنید)', 'error');
+                setStatus('❌ دسترسی به دوربین ممکن نیست.', 'error');
                 isCameraActive = false;
                 cameraStarted = false;
                 captureBtn.disabled = true;
                 retakeBtn.disabled = true;
+                downloadJpgBtn.disabled = true;
                 downloadZipBtn.disabled = true;
                 downloadPdfBtn.disabled = true;
             }
         }
 
-        // ---- توقف دوربین ----
         function stopCameraTracks() {
             if (mediaStream) {
                 mediaStream.getTracks().forEach(track => track.stop());
@@ -441,10 +407,9 @@
             isCameraActive = false;
         }
 
-        // ---- گرفتن عکس ----
         function capturePhoto() {
             if (!isCameraActive || !video.videoWidth || !video.videoHeight) {
-                setStatus('⚠️ دوربین آماده نیست. لطفاً صبر کنید.', 'error');
+                setStatus('⚠️ دوربین آماده نیست.', 'error');
                 return;
             }
 
@@ -460,6 +425,7 @@
             canvas.style.display = 'block';
 
             isPhotoTaken = true;
+            downloadJpgBtn.disabled = false;
             downloadZipBtn.disabled = false;
             downloadPdfBtn.disabled = false;
             retakeBtn.disabled = false;
@@ -468,7 +434,6 @@
             setStatus('✅ عکس گرفته شد. کد ملی را وارد و دانلود کنید.', 'success');
         }
 
-        // ---- دوباره ----
         function retakePhoto() {
             if (!isCameraActive || !cameraStarted) {
                 stopCameraTracks();
@@ -481,6 +446,7 @@
 
             isPhotoTaken = false;
             photoDataURL = null;
+            downloadJpgBtn.disabled = true;
             downloadZipBtn.disabled = true;
             downloadPdfBtn.disabled = true;
             retakeBtn.disabled = true;
@@ -489,13 +455,31 @@
             setStatus('🔄 دوربین فعال. آماده عکس‌برداری.', 'success');
         }
 
-        // ---- دانلود به صورت ZIP ----
-        function downloadAsZip() {
+        // ============= دانلود JPG =============
+        function downloadJpg() {
             if (!isPhotoTaken || !photoDataURL) {
                 setStatus('⚠️ ابتدا عکس بگیرید.', 'error');
                 return;
             }
+            const code = validateNationalCode();
+            if (!code) return;
 
+            const datePart = getFormattedDate();
+            const link = document.createElement('a');
+            link.href = photoDataURL;
+            link.download = `${code}_${datePart}.jpg`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setStatus(`✅ دانلود JPG: "${code}_${datePart}.jpg"`, 'success');
+        }
+
+        // ============= دانلود ZIP (ساخت دستی) =============
+        function downloadZip() {
+            if (!isPhotoTaken || !photoDataURL) {
+                setStatus('⚠️ ابتدا عکس بگیرید.', 'error');
+                return;
+            }
             const code = validateNationalCode();
             if (!code) return;
 
@@ -503,38 +487,276 @@
             const fileName = `${code}_${datePart}.jpg`;
 
             try {
+                // استخراج داده باینری از base64
                 const base64Data = photoDataURL.split(',')[1];
+                const binaryData = atob(base64Data);
+                const bytes = new Uint8Array(binaryData.length);
+                for (let i = 0; i < binaryData.length; i++) {
+                    bytes[i] = binaryData.charCodeAt(i);
+                }
+
+                // ساخت هدر ZIP ساده
+                // ساختار: [محلی فایل هدر] + [داده] + [سنترال دایرکتوری] + [End of Central Directory]
+                const zipData = createZipFile(fileName, bytes);
                 
-                const zip = new JSZip();
-                zip.file(fileName, base64Data, { base64: true });
+                const blob = new Blob([zipData], { type: 'application/zip' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `${code}_${datePart}.zip`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
                 
-                zip.generateAsync({ type: 'blob' }).then(function(content) {
-                    const link = document.createElement('a');
-                    link.href = URL.createObjectURL(content);
-                    link.download = `${code}_${datePart}.zip`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    URL.revokeObjectURL(link.href);
-                    
-                    setStatus(`✅ دانلود ZIP: "${code}_${datePart}.zip"`, 'success');
-                }).catch(function(err) {
-                    console.error('ZIP error:', err);
-                    setStatus('❌ خطا در ساخت فایل ZIP', 'error');
-                });
+                setStatus(`✅ دانلود ZIP: "${code}_${datePart}.zip"`, 'success');
             } catch (err) {
                 console.error('ZIP error:', err);
                 setStatus('❌ خطا در ساخت فایل ZIP', 'error');
             }
         }
 
-        // ---- دانلود به صورت PDF ----
-        function downloadAsPdf() {
+        // تابع ساخت ZIP ساده (بدون کتابخانه)
+        function createZipFile(fileName, fileData) {
+            // این یک ZIP ساده است که فقط یک فایل دارد
+            // برای سادگی از ساختار استاندارد ZIP استفاده می‌کنیم
+            
+            const encoder = new TextEncoder();
+            const fileNameBytes = encoder.encode(fileName);
+            
+            // تاریخ فعلی (برای هدر)
+            const dosDate = 0x4B6A; // تاریخ ثابت
+            
+            // ===== Local File Header =====
+            const localHeader = new Uint8Array(30 + fileNameBytes.length);
+            let offset = 0;
+            
+            // signature (0x04034b50)
+            localHeader[offset++] = 0x50;
+            localHeader[offset++] = 0x4B;
+            localHeader[offset++] = 0x03;
+            localHeader[offset++] = 0x04;
+            
+            // version (2)
+            localHeader[offset++] = 0x0A;
+            localHeader[offset++] = 0x00;
+            
+            // general purpose bit flag (0)
+            localHeader[offset++] = 0x00;
+            localHeader[offset++] = 0x00;
+            
+            // compression method (0 = none)
+            localHeader[offset++] = 0x00;
+            localHeader[offset++] = 0x00;
+            
+            // last mod file time (dos)
+            localHeader[offset++] = 0x00;
+            localHeader[offset++] = 0x00;
+            
+            // last mod file date (dos)
+            localHeader[offset++] = 0x6A;
+            localHeader[offset++] = 0x4B;
+            
+            // crc-32 (0)
+            localHeader[offset++] = 0x00;
+            localHeader[offset++] = 0x00;
+            localHeader[offset++] = 0x00;
+            localHeader[offset++] = 0x00;
+            
+            // compressed size (fileData.length)
+            const cSize = fileData.length;
+            localHeader[offset++] = cSize & 0xFF;
+            localHeader[offset++] = (cSize >> 8) & 0xFF;
+            localHeader[offset++] = (cSize >> 16) & 0xFF;
+            localHeader[offset++] = (cSize >> 24) & 0xFF;
+            
+            // uncompressed size (same)
+            localHeader[offset++] = cSize & 0xFF;
+            localHeader[offset++] = (cSize >> 8) & 0xFF;
+            localHeader[offset++] = (cSize >> 16) & 0xFF;
+            localHeader[offset++] = (cSize >> 24) & 0xFF;
+            
+            // file name length
+            const fnLen = fileNameBytes.length;
+            localHeader[offset++] = fnLen & 0xFF;
+            localHeader[offset++] = (fnLen >> 8) & 0xFF;
+            
+            // extra field length (0)
+            localHeader[offset++] = 0x00;
+            localHeader[offset++] = 0x00;
+            
+            // file name
+            for (let i = 0; i < fnLen; i++) {
+                localHeader[offset++] = fileNameBytes[i];
+            }
+            
+            // ===== File Data =====
+            const fileDataBytes = fileData;
+            
+            // ===== Central Directory Header =====
+            const centralHeader = new Uint8Array(46 + fileNameBytes.length);
+            offset = 0;
+            
+            // signature (0x02014b50)
+            centralHeader[offset++] = 0x50;
+            centralHeader[offset++] = 0x4B;
+            centralHeader[offset++] = 0x01;
+            centralHeader[offset++] = 0x02;
+            
+            // version made by (0)
+            centralHeader[offset++] = 0x00;
+            centralHeader[offset++] = 0x00;
+            
+            // version needed (2)
+            centralHeader[offset++] = 0x0A;
+            centralHeader[offset++] = 0x00;
+            
+            // general purpose bit flag (0)
+            centralHeader[offset++] = 0x00;
+            centralHeader[offset++] = 0x00;
+            
+            // compression method (0)
+            centralHeader[offset++] = 0x00;
+            centralHeader[offset++] = 0x00;
+            
+            // last mod time/date
+            centralHeader[offset++] = 0x00;
+            centralHeader[offset++] = 0x00;
+            centralHeader[offset++] = 0x6A;
+            centralHeader[offset++] = 0x4B;
+            
+            // crc-32 (0)
+            centralHeader[offset++] = 0x00;
+            centralHeader[offset++] = 0x00;
+            centralHeader[offset++] = 0x00;
+            centralHeader[offset++] = 0x00;
+            
+            // compressed size
+            centralHeader[offset++] = cSize & 0xFF;
+            centralHeader[offset++] = (cSize >> 8) & 0xFF;
+            centralHeader[offset++] = (cSize >> 16) & 0xFF;
+            centralHeader[offset++] = (cSize >> 24) & 0xFF;
+            
+            // uncompressed size
+            centralHeader[offset++] = cSize & 0xFF;
+            centralHeader[offset++] = (cSize >> 8) & 0xFF;
+            centralHeader[offset++] = (cSize >> 16) & 0xFF;
+            centralHeader[offset++] = (cSize >> 24) & 0xFF;
+            
+            // file name length
+            centralHeader[offset++] = fnLen & 0xFF;
+            centralHeader[offset++] = (fnLen >> 8) & 0xFF;
+            
+            // extra field length (0)
+            centralHeader[offset++] = 0x00;
+            centralHeader[offset++] = 0x00;
+            
+            // file comment length (0)
+            centralHeader[offset++] = 0x00;
+            centralHeader[offset++] = 0x00;
+            
+            // disk number start (0)
+            centralHeader[offset++] = 0x00;
+            centralHeader[offset++] = 0x00;
+            
+            // internal file attributes (0)
+            centralHeader[offset++] = 0x00;
+            centralHeader[offset++] = 0x00;
+            
+            // external file attributes (0)
+            centralHeader[offset++] = 0x00;
+            centralHeader[offset++] = 0x00;
+            centralHeader[offset++] = 0x00;
+            centralHeader[offset++] = 0x00;
+            
+            // relative offset of local header (0)
+            centralHeader[offset++] = 0x00;
+            centralHeader[offset++] = 0x00;
+            centralHeader[offset++] = 0x00;
+            centralHeader[offset++] = 0x00;
+            
+            // file name
+            for (let i = 0; i < fnLen; i++) {
+                centralHeader[offset++] = fileNameBytes[i];
+            }
+            
+            // ===== End of Central Directory =====
+            const endHeader = new Uint8Array(22);
+            offset = 0;
+            
+            // signature (0x06054b50)
+            endHeader[offset++] = 0x50;
+            endHeader[offset++] = 0x4B;
+            endHeader[offset++] = 0x05;
+            endHeader[offset++] = 0x06;
+            
+            // number of this disk (0)
+            endHeader[offset++] = 0x00;
+            endHeader[offset++] = 0x00;
+            
+            // disk where central directory starts (0)
+            endHeader[offset++] = 0x00;
+            endHeader[offset++] = 0x00;
+            
+            // number of central directory records on this disk (1)
+            endHeader[offset++] = 0x01;
+            endHeader[offset++] = 0x00;
+            
+            // total number of central directory records (1)
+            endHeader[offset++] = 0x01;
+            endHeader[offset++] = 0x00;
+            
+            // central directory size
+            const cdSize = centralHeader.length;
+            endHeader[offset++] = cdSize & 0xFF;
+            endHeader[offset++] = (cdSize >> 8) & 0xFF;
+            endHeader[offset++] = (cdSize >> 16) & 0xFF;
+            endHeader[offset++] = (cdSize >> 24) & 0xFF;
+            
+            // central directory offset
+            const cdOffset = localHeader.length + fileDataBytes.length;
+            endHeader[offset++] = cdOffset & 0xFF;
+            endHeader[offset++] = (cdOffset >> 8) & 0xFF;
+            endHeader[offset++] = (cdOffset >> 16) & 0xFF;
+            endHeader[offset++] = (cdOffset >> 24) & 0xFF;
+            
+            // comment length (0)
+            endHeader[offset++] = 0x00;
+            endHeader[offset++] = 0x00;
+            
+            // ===== ترکیب همه =====
+            const totalSize = localHeader.length + fileDataBytes.length + centralHeader.length + endHeader.length;
+            const result = new Uint8Array(totalSize);
+            let pos = 0;
+            
+            result.set(localHeader, pos);
+            pos += localHeader.length;
+            
+            result.set(fileDataBytes, pos);
+            pos += fileDataBytes.length;
+            
+            // تنظیم offset در central directory
+            const offsetBytes = new Uint8Array(4);
+            offsetBytes[0] = 0x00;
+            offsetBytes[1] = 0x00;
+            offsetBytes[2] = 0x00;
+            offsetBytes[3] = 0x00;
+            // offset را در central header تنظیم می‌کنیم
+            // (در این نسخه ساده، offset 0 است چون local header اول است)
+            
+            result.set(centralHeader, pos);
+            pos += centralHeader.length;
+            
+            result.set(endHeader, pos);
+            
+            return result;
+        }
+
+        // ============= دانلود PDF (ساخت دستی) =============
+        function downloadPdf() {
             if (!isPhotoTaken || !photoDataURL) {
                 setStatus('⚠️ ابتدا عکس بگیرید.', 'error');
                 return;
             }
-
             const code = validateNationalCode();
             if (!code) return;
 
@@ -542,69 +764,175 @@
             const fileName = `${code}_${datePart}.pdf`;
 
             try {
-                const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF('p', 'mm', 'a4');
-                const pageWidth = pdf.internal.pageSize.getWidth();
-                const pageHeight = pdf.internal.pageSize.getHeight();
-
-                const imgData = photoDataURL;
-                const img = new Image();
-                img.onload = function() {
-                    const imgRatio = img.width / img.height;
-                    let finalWidth = pageWidth - 20;
-                    let finalHeight = finalWidth / imgRatio;
-                    
-                    if (finalHeight > pageHeight - 20) {
-                        finalHeight = pageHeight - 20;
-                        finalWidth = finalHeight * imgRatio;
-                    }
-                    
-                    const x = (pageWidth - finalWidth) / 2;
-                    const y = (pageHeight - finalHeight) / 2;
-                    
-                    pdf.addImage(imgData, 'JPEG', x, y, finalWidth, finalHeight);
-                    pdf.setFontSize(10);
-                    pdf.setTextColor(100);
-                    pdf.text(`کد ملی: ${code} - ${datePart}`, pageWidth/2, pageHeight - 10, { align: 'center' });
-                    
-                    const pdfBlob = pdf.output('blob');
-                    const link = document.createElement('a');
-                    link.href = URL.createObjectURL(pdfBlob);
-                    link.download = fileName;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    URL.revokeObjectURL(link.href);
-                    
-                    setStatus(`✅ دانلود PDF: "${fileName}"`, 'success');
-                };
-                img.src = photoDataURL;
+                // استخراج داده عکس
+                const base64Data = photoDataURL.split(',')[1];
+                
+                // ساخت PDF ساده
+                const pdfData = createSimplePDF(base64Data, code, datePart);
+                
+                const blob = new Blob([pdfData], { type: 'application/pdf' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+                
+                setStatus(`✅ دانلود PDF: "${fileName}"`, 'success');
             } catch (err) {
                 console.error('PDF error:', err);
                 setStatus('❌ خطا در ساخت فایل PDF', 'error');
             }
         }
 
-        // ---- رویدادها ----
+        // تابع ساخت PDF ساده
+        function createSimplePDF(imageBase64, code, date) {
+            // این یک PDF ساده با یک صفحه A4 و یک عکس است
+            // از ساختار استاندارد PDF استفاده می‌کنیم
+            
+            // ابعاد A4: 595.28 × 841.89 pt
+            const pageWidth = 595.28;
+            const pageHeight = 841.89;
+            const margin = 40;
+            
+            // محاسبه ابعاد عکس (با فرض 4:3)
+            const imgWidth = pageWidth - (margin * 2);
+            const imgHeight = imgWidth * 0.75;
+            const imgX = margin;
+            const imgY = (pageHeight - imgHeight) / 2;
+            
+            // ایجاد شیء PDF
+            const pdf = {
+                objects: {},
+                nextId: 1,
+                addObject: function(obj) {
+                    const id = this.nextId++;
+                    this.objects[id] = obj;
+                    return id;
+                },
+                getObject: function(id) {
+                    return `${id} 0 obj\n${this.objects[id]}\nendobj\n`;
+                },
+                getObjectRef: function(id) {
+                    return `${id} 0 R`;
+                }
+            };
+            
+            // 1. Catalog
+            const catalog = `
+<< /Type /Catalog
+   /Pages ${pdf.getObjectRef(2)}
+>>
+`;
+            pdf.addObject(catalog);
+            
+            // 2. Pages
+            const pages = `
+<< /Type /Pages
+   /Kids [${pdf.getObjectRef(3)}]
+   /Count 1
+>>
+`;
+            pdf.addObject(pages);
+            
+            // 3. Page
+            const page = `
+<< /Type /Page
+   /Parent ${pdf.getObjectRef(2)}
+   /MediaBox [0 0 ${pageWidth} ${pageHeight}]
+   /Contents ${pdf.getObjectRef(4)}
+   /Resources <<
+       /XObject << /Img ${pdf.getObjectRef(5)} >>
+       /Font << /F1 ${pdf.getObjectRef(6)} >>
+   >>
+>>
+`;
+            pdf.addObject(page);
+            
+            // 4. Contents (برای نمایش عکس و متن)
+            const contents = `
+<< /Length ${1000} >>
+stream
+q
+${imgWidth} 0 0 ${imgHeight} ${imgX} ${imgY} cm
+/Img Do
+Q
+BT
+/F1 12 Tf
+0 0 0 rg
+${pageWidth/2} ${margin-10} Td
+(${code} - ${date}) Tj
+ET
+endstream
+`;
+            pdf.addObject(contents);
+            
+            // 5. Image XObject
+            const imageObj = `
+<< /Type /XObject
+   /Subtype /Image
+   /Width 1280
+   /Height 960
+   /ColorSpace /DeviceRGB
+   /BitsPerComponent 8
+   /Filter /DCTDecode
+   /Length ${imageBase64.length}
+>>
+stream
+${imageBase64}
+endstream
+`;
+            pdf.addObject(imageObj);
+            
+            // 6. Font (ساده)
+            const font = `
+<< /Type /Font
+   /Subtype /Type1
+   /BaseFont /Helvetica
+>>
+`;
+            pdf.addObject(font);
+            
+            // ساخت فایل نهایی
+            let output = '%PDF-1.4\n';
+            const objIds = Object.keys(pdf.objects).sort((a,b) => a-b);
+            let xrefOffset = 0;
+            let xref = 'xref\n0 ' + (pdf.nextId) + '\n';
+            xref += '0000000000 65535 f \n';
+            
+            for (const id of objIds) {
+                const objStr = pdf.getObject(parseInt(id));
+                xref += String(xrefOffset).padStart(10, '0') + ' 00000 n \n';
+                output += objStr;
+                xrefOffset += objStr.length;
+            }
+            
+            xref += 'trailer\n<< /Size ' + (pdf.nextId) + ' /Root 1 0 R >>\n';
+            xref += 'startxref\n' + xrefOffset + '\n%%EOF';
+            
+            output += xref;
+            
+            return output;
+        }
+
+        // ===== رویدادها =====
         captureBtn.addEventListener('click', capturePhoto);
         retakeBtn.addEventListener('click', retakePhoto);
-        downloadZipBtn.addEventListener('click', downloadAsZip);
-        downloadPdfBtn.addEventListener('click', downloadAsPdf);
+        downloadJpgBtn.addEventListener('click', downloadJpg);
+        downloadZipBtn.addEventListener('click', downloadZip);
+        downloadPdfBtn.addEventListener('click', downloadPdf);
 
-        // ---- ورودی کد ملی ----
         nationalCodeInput.addEventListener('input', function() {
             this.value = this.value.replace(/\D/g, '').slice(0, 10);
         });
 
-        // ---- شروع اولیه ----
         startCamera();
 
-        // ---- در صورت بسته شدن تب ----
         window.addEventListener('beforeunload', function() {
             stopCameraTracks();
         });
 
-        // ---- برگشت به صفحه ----
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden) {
                 if (!isCameraActive && !isPhotoTaken) {
@@ -617,14 +945,12 @@
             }
         });
 
-        // ---- خطای ویدیو ----
         video.addEventListener('error', (e) => {
-            setStatus('❌ خطا در پخش ویدیو. دوباره تلاش کنید.', 'error');
+            setStatus('❌ خطا در پخش ویدیو.', 'error');
             isCameraActive = false;
             captureBtn.disabled = true;
         });
 
-        // ---- ویدیو آماده شد ----
         video.addEventListener('loadedmetadata', () => {
             if (video.videoWidth > 0 && video.videoHeight > 0) {
                 canvas.width = video.videoWidth;
@@ -637,7 +963,7 @@
             }
         });
 
-        console.log('وب‌اپ عکس با کد ملی آماده است (ZIP + PDF)');
+        console.log('وب‌اپ عکس با کد ملی آماده است (JPG + ZIP + PDF)');
     })();
 </script>
 </body>
