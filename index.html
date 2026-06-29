@@ -317,14 +317,7 @@
         <button id="retakeBtn" class="btn btn-danger" disabled>🔄 دوباره</button>
     </div>
 
-    <div class="section-label">⬇️ دانلود فایل</div>
-    <div class="action-row">
-        <button id="downloadJpgBtn" class="btn btn-download-jpg" disabled>🖼️ JPG</button>
-        <button id="downloadZipBtn" class="btn btn-share-zip" disabled>📦 ZIP</button>
-        <button id="downloadPdfBtn" class="btn btn-share-pdf" disabled>📄 PDF</button>
-    </div>
-
-    <div class="section-label">📤 اشتراک‌گذاری (Share)</div>
+<div class="section-label">📤 اشتراک‌گذاری (Share)</div>
     <div class="share-row">
         <button id="shareJpgBtn" class="btn btn-share-jpg" disabled>🖼️ JPG</button>
         <button id="shareZipBtn" class="btn btn-share-zip" disabled>📦 ZIP</button>
@@ -347,11 +340,6 @@
         const statusDiv = document.getElementById('statusMessage');
         const captureBtn = document.getElementById('captureBtn');
         const retakeBtn = document.getElementById('retakeBtn');
-        
-        // دکمه‌های دانلود
-        const downloadJpgBtn = document.getElementById('downloadJpgBtn');
-        const downloadZipBtn = document.getElementById('downloadZipBtn');
-        const downloadPdfBtn = document.getElementById('downloadPdfBtn');
         
         // دکمه‌های اشتراک‌گذاری
         const shareJpgBtn = document.getElementById('shareJpgBtn');
@@ -443,7 +431,7 @@
                 retakeBtn.disabled = true;
                 
                 // غیرفعال کردن همه دکمه‌ها
-                const allBtns = [downloadJpgBtn, downloadZipBtn, downloadPdfBtn, shareJpgBtn, shareZipBtn, sharePdfBtn];
+                const allBtns = [shareJpgBtn, shareZipBtn, sharePdfBtn];
                 allBtns.forEach(b => b.disabled = true);
 
                 setStatus('✅ دوربین آماده است. عکس بگیرید.', 'success');
@@ -454,7 +442,7 @@
                 cameraStarted = false;
                 captureBtn.disabled = true;
                 retakeBtn.disabled = true;
-                const allBtns = [downloadJpgBtn, downloadZipBtn, downloadPdfBtn, shareJpgBtn, shareZipBtn, sharePdfBtn];
+                const allBtns = [shareJpgBtn, shareZipBtn, sharePdfBtn];
                 allBtns.forEach(b => b.disabled = true);
             }
         }
@@ -488,7 +476,7 @@
             isPhotoTaken = true;
             
             // فعال کردن همه دکمه‌ها
-            const allBtns = [downloadJpgBtn, downloadZipBtn, downloadPdfBtn, shareJpgBtn, shareZipBtn, sharePdfBtn];
+            const allBtns = [shareJpgBtn, shareZipBtn, sharePdfBtn];
             allBtns.forEach(b => b.disabled = false);
             
             retakeBtn.disabled = false;
@@ -510,7 +498,7 @@
             isPhotoTaken = false;
             photoDataURL = null;
             
-            const allBtns = [downloadJpgBtn, downloadZipBtn, downloadPdfBtn, shareJpgBtn, shareZipBtn, sharePdfBtn];
+            const allBtns = [shareJpgBtn, shareZipBtn, sharePdfBtn];
             allBtns.forEach(b => b.disabled = true);
             
             retakeBtn.disabled = true;
@@ -530,8 +518,7 @@
             
             navigator.share({
                 files: [file],
-                title: fileName,
-                text: `فایل ${fileName}`
+                title: fileName
             }).then(() => {
                 setStatus(`✅ فایل "${fileName}" با موفقیت به اشتراک گذاشته شد.`, 'success');
             }).catch((err) => {
@@ -705,11 +692,7 @@
         captureBtn.addEventListener('click', capturePhoto);
         retakeBtn.addEventListener('click', retakePhoto);
         
-        downloadJpgBtn.addEventListener('click', downloadJpg);
-        downloadZipBtn.addEventListener('click', downloadZip);
-        downloadPdfBtn.addEventListener('click', downloadPdf);
-        
-        shareJpgBtn.addEventListener('click', shareJpg);
+shareJpgBtn.addEventListener('click', shareJpg);
         shareZipBtn.addEventListener('click', shareZip);
         sharePdfBtn.addEventListener('click', sharePdf);
 
