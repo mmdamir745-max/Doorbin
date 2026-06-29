@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>وب‌اپ عکس با کد ملی</title>
-    <!-- JSZip از CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <!-- jsPDF از CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         * {
@@ -137,24 +135,30 @@
             pointer-events: none;
             filter: grayscale(0.4);
         }
-        .btn-download-zip {
+        .btn-share-zip {
             background: #7c3aed;
             border-color: #8b5cf6;
             color: white;
         }
-        .btn-download-zip:active { background: #6d28d9; }
-        .btn-download-pdf {
+        .btn-share-zip:active { background: #6d28d9; }
+        .btn-share-pdf {
             background: #dc2626;
             border-color: #ef4444;
             color: white;
         }
-        .btn-download-pdf:active { background: #b91c1c; }
-        .btn-download-jpg {
+        .btn-share-pdf:active { background: #b91c1c; }
+        .btn-share-jpg {
             background: #16a34a;
             border-color: #22c55e;
             color: white;
         }
-        .btn-download-jpg:active { background: #15803d; }
+        .btn-share-jpg:active { background: #15803d; }
+        .btn-download-jpg {
+            background: #0ea5e9;
+            border-color: #38bdf8;
+            color: white;
+        }
+        .btn-download-jpg:active { background: #0284c7; }
         .input-section {
             margin: 18px 0 12px;
             display: flex;
@@ -236,13 +240,25 @@
             border-color: #3b82f6;
             background: #0f1a2e;
         }
-        .download-row {
+        .action-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 4px;
+            flex-wrap: wrap;
+        }
+        .action-row .btn {
+            flex: 1;
+            min-width: 0;
+            padding: 14px 10px;
+            font-size: 14px;
+        }
+        .share-row {
             display: flex;
             gap: 10px;
             margin-top: 8px;
             flex-wrap: wrap;
         }
-        .download-row .btn {
+        .share-row .btn {
             flex: 1;
             min-width: 0;
             padding: 14px 10px;
@@ -256,11 +272,19 @@
             border-top: 1px solid #1e293b;
             padding-top: 16px;
         }
+        .section-label {
+            font-size: 13px;
+            color: #94a3b8;
+            text-align: center;
+            margin: 8px 0 4px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
         @media (max-width: 420px) {
             .app-container { padding: 16px; }
             .btn { min-width: 80px; padding: 12px 14px; font-size: 14px; }
             .input-field { font-size: 18px; padding: 14px 16px; }
-            .download-row .btn { font-size: 12px; padding: 12px 8px; }
+            .action-row .btn, .share-row .btn { font-size: 12px; padding: 12px 8px; }
         }
     </style>
 </head>
@@ -291,10 +315,18 @@
         <button id="retakeBtn" class="btn btn-danger" disabled>🔄 دوباره</button>
     </div>
 
-    <div class="download-row">
+    <div class="section-label">⬇️ دانلود فایل</div>
+    <div class="action-row">
         <button id="downloadJpgBtn" class="btn btn-download-jpg" disabled>🖼️ JPG</button>
-        <button id="downloadZipBtn" class="btn btn-download-zip" disabled>📦 ZIP</button>
-        <button id="downloadPdfBtn" class="btn btn-download-pdf" disabled>📄 PDF</button>
+        <button id="downloadZipBtn" class="btn btn-share-zip" disabled>📦 ZIP</button>
+        <button id="downloadPdfBtn" class="btn btn-share-pdf" disabled>📄 PDF</button>
+    </div>
+
+    <div class="section-label">📤 اشتراک‌گذاری (Share)</div>
+    <div class="share-row">
+        <button id="shareJpgBtn" class="btn btn-share-jpg" disabled>🖼️ JPG</button>
+        <button id="shareZipBtn" class="btn btn-share-zip" disabled>📦 ZIP</button>
+        <button id="sharePdfBtn" class="btn btn-share-pdf" disabled>📄 PDF</button>
     </div>
 
     <div class="footer-note">
@@ -313,9 +345,16 @@
         const statusDiv = document.getElementById('statusMessage');
         const captureBtn = document.getElementById('captureBtn');
         const retakeBtn = document.getElementById('retakeBtn');
+        
+        // دکمه‌های دانلود
         const downloadJpgBtn = document.getElementById('downloadJpgBtn');
         const downloadZipBtn = document.getElementById('downloadZipBtn');
         const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+        
+        // دکمه‌های اشتراک‌گذاری
+        const shareJpgBtn = document.getElementById('shareJpgBtn');
+        const shareZipBtn = document.getElementById('shareZipBtn');
+        const sharePdfBtn = document.getElementById('sharePdfBtn');
 
         let mediaStream = null;
         let isCameraActive = false;
@@ -384,9 +423,10 @@
 
                 captureBtn.disabled = false;
                 retakeBtn.disabled = true;
-                downloadJpgBtn.disabled = true;
-                downloadZipBtn.disabled = true;
-                downloadPdfBtn.disabled = true;
+                
+                // غیرفعال کردن همه دکمه‌ها
+                const allBtns = [downloadJpgBtn, downloadZipBtn, downloadPdfBtn, shareJpgBtn, shareZipBtn, sharePdfBtn];
+                allBtns.forEach(b => b.disabled = true);
 
                 setStatus('✅ دوربین آماده است. عکس بگیرید.', 'success');
             } catch (err) {
@@ -396,9 +436,8 @@
                 cameraStarted = false;
                 captureBtn.disabled = true;
                 retakeBtn.disabled = true;
-                downloadJpgBtn.disabled = true;
-                downloadZipBtn.disabled = true;
-                downloadPdfBtn.disabled = true;
+                const allBtns = [downloadJpgBtn, downloadZipBtn, downloadPdfBtn, shareJpgBtn, shareZipBtn, sharePdfBtn];
+                allBtns.forEach(b => b.disabled = true);
             }
         }
 
@@ -429,13 +468,15 @@
             canvas.style.display = 'block';
 
             isPhotoTaken = true;
-            downloadJpgBtn.disabled = false;
-            downloadZipBtn.disabled = false;
-            downloadPdfBtn.disabled = false;
+            
+            // فعال کردن همه دکمه‌ها
+            const allBtns = [downloadJpgBtn, downloadZipBtn, downloadPdfBtn, shareJpgBtn, shareZipBtn, sharePdfBtn];
+            allBtns.forEach(b => b.disabled = false);
+            
             retakeBtn.disabled = false;
             captureBtn.disabled = true;
 
-            setStatus('✅ عکس گرفته شد. کد ملی را وارد و دانلود کنید.', 'success');
+            setStatus('✅ عکس گرفته شد. کد ملی را وارد و دانلود یا اشتراک‌گذاری کنید.', 'success');
         }
 
         function retakePhoto() {
@@ -450,146 +491,209 @@
 
             isPhotoTaken = false;
             photoDataURL = null;
-            downloadJpgBtn.disabled = true;
-            downloadZipBtn.disabled = true;
-            downloadPdfBtn.disabled = true;
+            
+            const allBtns = [downloadJpgBtn, downloadZipBtn, downloadPdfBtn, shareJpgBtn, shareZipBtn, sharePdfBtn];
+            allBtns.forEach(b => b.disabled = true);
+            
             retakeBtn.disabled = true;
             captureBtn.disabled = false;
 
             setStatus('🔄 دوربین فعال. آماده عکس‌برداری.', 'success');
         }
 
-        // ===== دانلود JPG =====
-        function downloadJpg() {
-            if (!isPhotoTaken || !photoDataURL) {
-                setStatus('⚠️ ابتدا عکس بگیرید.', 'error');
+        // ===== تابع کمکی برای اشتراک‌گذاری =====
+        function shareFile(blob, fileName, fileType) {
+            if (!navigator.share) {
+                setStatus('⚠️ مرورگر شما از اشتراک‌گذاری پشتیبانی نمی‌کند.', 'error');
                 return;
             }
-            const code = validateNationalCode();
-            if (!code) return;
 
-            const datePart = getFormattedDate();
+            const file = new File([blob], fileName, { type: fileType });
+            
+            navigator.share({
+                files: [file],
+                title: fileName,
+                text: `فایل ${fileName}`
+            }).then(() => {
+                setStatus(`✅ فایل "${fileName}" با موفقیت به اشتراک گذاشته شد.`, 'success');
+            }).catch((err) => {
+                if (err.name !== 'AbortError') {
+                    console.error('Share error:', err);
+                    setStatus('❌ خطا در اشتراک‌گذاری فایل.', 'error');
+                }
+            });
+        }
+
+        // ===== تابع کمکی برای دانلود =====
+        function downloadFile(blob, fileName) {
             const link = document.createElement('a');
-            link.href = photoDataURL;
-            link.download = `${code}_${datePart}.jpg`;
+            link.href = URL.createObjectURL(blob);
+            link.download = fileName;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            setStatus(`✅ دانلود JPG: "${code}_${datePart}.jpg"`, 'success');
+            setTimeout(() => URL.revokeObjectURL(link.href), 5000);
+            setStatus(`✅ دانلود: "${fileName}"`, 'success');
         }
 
-        // ===== دانلود ZIP با JSZip =====
-        function downloadZip() {
+        // ===== تولید فایل‌ها =====
+        function getFileData() {
             if (!isPhotoTaken || !photoDataURL) {
                 setStatus('⚠️ ابتدا عکس بگیرید.', 'error');
-                return;
+                return null;
             }
             const code = validateNationalCode();
-            if (!code) return;
+            if (!code) return null;
+            return { code, datePart: getFormattedDate() };
+        }
 
-            // بررسی وجود JSZip
-            if (typeof JSZip === 'undefined') {
-                setStatus('❌ کتابخانه ZIP بارگذاری نشد. اتصال اینترنت را بررسی کنید.', 'error');
-                return;
+        function createJpgBlob() {
+            const base64Data = photoDataURL.split(',')[1];
+            const byteString = atob(base64Data);
+            const bytes = new Uint8Array(byteString.length);
+            for (let i = 0; i < byteString.length; i++) {
+                bytes[i] = byteString.charCodeAt(i);
             }
+            return new Blob([bytes], { type: 'image/jpeg' });
+        }
 
-            const datePart = getFormattedDate();
-            const fileName = `${code}_${datePart}.jpg`;
-
-            try {
+        function createZipBlob() {
+            return new Promise((resolve, reject) => {
+                if (typeof JSZip === 'undefined') {
+                    reject(new Error('کتابخانه ZIP بارگذاری نشد.'));
+                    return;
+                }
                 const base64Data = photoDataURL.split(',')[1];
-                
                 const zip = new JSZip();
-                zip.file(fileName, base64Data, { base64: true });
-                
-                zip.generateAsync({ type: 'blob' }).then(function(content) {
-                    const link = document.createElement('a');
-                    link.href = URL.createObjectURL(content);
-                    link.download = `${code}_${datePart}.zip`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    URL.revokeObjectURL(link.href);
-                    
-                    setStatus(`✅ دانلود ZIP: "${code}_${datePart}.zip"`, 'success');
-                }).catch(function(err) {
-                    console.error('ZIP error:', err);
-                    setStatus('❌ خطا در ساخت فایل ZIP', 'error');
-                });
-            } catch (err) {
-                console.error('ZIP error:', err);
-                setStatus('❌ خطا در ساخت فایل ZIP', 'error');
-            }
+                zip.file('photo.jpg', base64Data, { base64: true });
+                zip.generateAsync({ type: 'blob' }).then(resolve).catch(reject);
+            });
         }
 
-        // ===== دانلود PDF با jsPDF =====
-        function downloadPdf() {
-            if (!isPhotoTaken || !photoDataURL) {
-                setStatus('⚠️ ابتدا عکس بگیرید.', 'error');
-                return;
-            }
-            const code = validateNationalCode();
-            if (!code) return;
-
-            // بررسی وجود jsPDF
-            if (typeof window.jspdf === 'undefined') {
-                setStatus('❌ کتابخانه PDF بارگذاری نشد. اتصال اینترنت را بررسی کنید.', 'error');
-                return;
-            }
-
-            const datePart = getFormattedDate();
-            const fileName = `${code}_${datePart}.pdf`;
-
-            try {
+        function createPdfBlob() {
+            return new Promise((resolve, reject) => {
+                if (typeof window.jspdf === 'undefined') {
+                    reject(new Error('کتابخانه PDF بارگذاری نشد.'));
+                    return;
+                }
+                
                 const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF('p', 'mm', 'a4');
+                const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
                 const pageWidth = pdf.internal.pageSize.getWidth();
                 const pageHeight = pdf.internal.pageSize.getHeight();
-
-                const imgData = photoDataURL;
+                
                 const img = new Image();
                 img.onload = function() {
                     const imgRatio = img.width / img.height;
-                    let finalWidth = pageWidth - 20;
-                    let finalHeight = finalWidth / imgRatio;
+                    const margin = 20;
+                    const maxWidth = pageWidth - (margin * 2);
+                    const maxHeight = pageHeight - (margin * 2);
                     
-                    if (finalHeight > pageHeight - 20) {
-                        finalHeight = pageHeight - 20;
-                        finalWidth = finalHeight * imgRatio;
+                    let finalWidth, finalHeight;
+                    if (imgRatio > 1) {
+                        finalWidth = maxWidth;
+                        finalHeight = maxWidth / imgRatio;
+                        if (finalHeight > maxHeight) {
+                            finalHeight = maxHeight;
+                            finalWidth = maxHeight * imgRatio;
+                        }
+                    } else {
+                        finalHeight = maxHeight;
+                        finalWidth = maxHeight * imgRatio;
+                        if (finalWidth > maxWidth) {
+                            finalWidth = maxWidth;
+                            finalHeight = maxWidth / imgRatio;
+                        }
                     }
                     
                     const x = (pageWidth - finalWidth) / 2;
                     const y = (pageHeight - finalHeight) / 2;
                     
-                    pdf.addImage(imgData, 'JPEG', x, y, finalWidth, finalHeight);
-                    pdf.setFontSize(10);
-                    pdf.setTextColor(100);
-                    pdf.text(`کد ملی: ${code} - ${datePart}`, pageWidth/2, pageHeight - 10, { align: 'center' });
+                    pdf.addImage(photoDataURL, 'JPEG', x, y, finalWidth, finalHeight);
                     
-                    const pdfBlob = pdf.output('blob');
-                    const link = document.createElement('a');
-                    link.href = URL.createObjectURL(pdfBlob);
-                    link.download = fileName;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    URL.revokeObjectURL(link.href);
+                    const code = getNationalCode();
+                    const datePart = getFormattedDate();
+                    pdf.setFontSize(11);
+                    pdf.setTextColor(80, 80, 80);
+                    const text = `کد ملی: ${code}  |  تاریخ: ${datePart}`;
+                    const textWidth = pdf.getStringUnitWidth(text) * 11 / pdf.internal.scaleFactor;
+                    const textX = (pageWidth - textWidth) / 2;
+                    pdf.text(text, textX, pageHeight - 8);
                     
-                    setStatus(`✅ دانلود PDF: "${fileName}"`, 'success');
+                    resolve(pdf.output('blob'));
                 };
+                img.onerror = () => reject(new Error('بارگذاری تصویر برای PDF失敗'));
                 img.src = photoDataURL;
-            } catch (err) {
-                console.error('PDF error:', err);
-                setStatus('❌ خطا در ساخت فایل PDF', 'error');
-            }
+            });
+        }
+
+        // ===== دانلودها =====
+        function downloadJpg() {
+            const data = getFileData();
+            if (!data) return;
+            const blob = createJpgBlob();
+            downloadFile(blob, `${data.code}_${data.datePart}.jpg`);
+        }
+
+        function downloadZip() {
+            const data = getFileData();
+            if (!data) return;
+            createZipBlob().then(blob => {
+                downloadFile(blob, `${data.code}_${data.datePart}.zip`);
+            }).catch(err => {
+                setStatus('❌ ' + err.message, 'error');
+            });
+        }
+
+        function downloadPdf() {
+            const data = getFileData();
+            if (!data) return;
+            createPdfBlob().then(blob => {
+                downloadFile(blob, `${data.code}_${data.datePart}.pdf`);
+            }).catch(err => {
+                setStatus('❌ ' + err.message, 'error');
+            });
+        }
+
+        // ===== اشتراک‌گذاری‌ها =====
+        function shareJpg() {
+            const data = getFileData();
+            if (!data) return;
+            const blob = createJpgBlob();
+            shareFile(blob, `${data.code}_${data.datePart}.jpg`, 'image/jpeg');
+        }
+
+        function shareZip() {
+            const data = getFileData();
+            if (!data) return;
+            createZipBlob().then(blob => {
+                shareFile(blob, `${data.code}_${data.datePart}.zip`, 'application/zip');
+            }).catch(err => {
+                setStatus('❌ ' + err.message, 'error');
+            });
+        }
+
+        function sharePdf() {
+            const data = getFileData();
+            if (!data) return;
+            createPdfBlob().then(blob => {
+                shareFile(blob, `${data.code}_${data.datePart}.pdf`, 'application/pdf');
+            }).catch(err => {
+                setStatus('❌ ' + err.message, 'error');
+            });
         }
 
         // ===== رویدادها =====
         captureBtn.addEventListener('click', capturePhoto);
         retakeBtn.addEventListener('click', retakePhoto);
+        
         downloadJpgBtn.addEventListener('click', downloadJpg);
         downloadZipBtn.addEventListener('click', downloadZip);
         downloadPdfBtn.addEventListener('click', downloadPdf);
+        
+        shareJpgBtn.addEventListener('click', shareJpg);
+        shareZipBtn.addEventListener('click', shareZip);
+        sharePdfBtn.addEventListener('click', sharePdf);
 
         nationalCodeInput.addEventListener('input', function() {
             this.value = this.value.replace(/\D/g, '').slice(0, 10);
@@ -631,7 +735,7 @@
             }
         });
 
-        console.log('وب‌اپ عکس با کد ملی آماده است (JPG + ZIP + PDF)');
+        console.log('وب‌اپ عکس با کد ملی آماده است (دانلود + اشتراک‌گذاری)');
     })();
 </script>
 </body>
