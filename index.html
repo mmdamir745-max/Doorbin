@@ -3,12 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>وب‌اپ عکس با کد ملی - اشتراک‌گذاری</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="عکس با کد ملی">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0b1120">
+    <meta name="apple-touch-fullscreen" content="yes">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📸</text></svg>">
+    <title>وب‌اپ عکس با کد ملی</title>
     <style>
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
+        }
+        html, body {
+            height: 100%;
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            left: 0;
         }
         body {
             background: #0b1120;
@@ -16,29 +31,52 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
             margin: 0;
-            padding: 12px;
+            padding: 0;
             color: #e2e8f0;
             -webkit-font-smoothing: antialiased;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
         .app-container {
             max-width: 460px;
             width: 100%;
+            height: 100vh;
+            height: 100dvh;
             background: #1e293b;
-            border-radius: 40px;
-            padding: 24px 20px 30px;
+            display: flex;
+            flex-direction: column;
+            padding: 20px 16px 24px;
             box-shadow: 0 25px 50px -8px rgba(0,0,0,0.8);
             border: 1px solid #334155;
-            transition: all 0.2s;
-            backdrop-filter: blur(2px);
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            position: relative;
+        }
+        /* حذف اسکرول‌بار در آیفون */
+        .app-container::-webkit-scrollbar {
+            width: 0;
+            background: transparent;
+        }
+        /* حالت تمام‌صفحه در آیفون */
+        @supports (padding: max(0px)) {
+            .app-container {
+                padding-left: max(16px, env(safe-area-inset-left));
+                padding-right: max(16px, env(safe-area-inset-right));
+                padding-top: max(20px, env(safe-area-inset-top));
+                padding-bottom: max(24px, env(safe-area-inset-bottom));
+            }
         }
         .header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 18px;
+            margin-bottom: 16px;
             padding: 0 4px;
+            flex-shrink: 0;
         }
         .header h1 {
             font-size: 22px;
@@ -65,12 +103,12 @@
             color: white;
             letter-spacing: 0.3px;
             border: 1px solid #3b82f6;
+            flex-shrink: 0;
         }
         .camera-frame {
             background: #0b1120;
-            border-radius: 32px;
+            border-radius: 28px;
             overflow: hidden;
-            margin: 6px 0 16px;
             position: relative;
             aspect-ratio: 4 / 3;
             display: flex;
@@ -78,6 +116,8 @@
             justify-content: center;
             border: 2px solid #2d3b52;
             box-shadow: inset 0 8px 16px rgba(0,0,0,0.6);
+            flex-shrink: 0;
+            min-height: 200px;
         }
         #video, #photoCanvas {
             width: 100%;
@@ -88,81 +128,14 @@
         }
         #photoCanvas {
             display: none;
-            border-radius: 30px;
-        }
-        .controls-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            justify-content: center;
-            margin: 6px 0 12px;
-        }
-        .btn {
-            background: #2d3b52;
-            border: none;
-            border-radius: 60px;
-            padding: 14px 20px;
-            font-size: 16px;
-            font-weight: 600;
-            color: #f8fafc;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            flex: 1 1 auto;
-            min-width: 110px;
-            transition: all 0.15s ease;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-            cursor: pointer;
-            border: 1px solid #475569;
-            letter-spacing: 0.3px;
-            touch-action: manipulation;
-            user-select: none;
-        }
-        .btn:active {
-            transform: scale(0.94);
-        }
-        .btn-primary {
-            background: #2563eb;
-            border-color: #3b82f6;
-            color: white;
-        }
-        .btn-primary:active { background: #1d4ed8; }
-        .btn-success {
-            background: #16a34a;
-            border-color: #22c55e;
-            color: white;
-        }
-        .btn-success:active { background: #15803d; }
-        .btn-danger {
-            background: #dc2626;
-            border-color: #ef4444;
-            color: white;
-        }
-        .btn-danger:active { background: #b91c1c; }
-        .btn-outline {
-            background: transparent;
-            border: 1.5px solid #475569;
-            color: #cbd5e1;
-        }
-        .btn-outline:active { background: #1e293b; }
-        .btn-share {
-            background: #7c3aed;
-            border-color: #8b5cf6;
-            color: white;
-        }
-        .btn-share:active { background: #6d28d9; }
-        .btn:disabled {
-            opacity: 0.4;
-            transform: scale(0.96);
-            pointer-events: none;
-            filter: grayscale(0.4);
+            border-radius: 26px;
         }
         .input-section {
-            margin: 18px 0 12px;
+            margin: 14px 0 10px;
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 4px;
+            flex-shrink: 0;
         }
         .input-section label {
             font-size: 14px;
@@ -185,7 +158,7 @@
             background: #0f172a;
             border: 2px solid #2d3b52;
             border-radius: 60px;
-            padding: 16px 24px;
+            padding: 14px 20px;
             font-size: 20px;
             font-weight: 600;
             color: #f1f5f9;
@@ -195,6 +168,8 @@
             letter-spacing: 2px;
             text-align: center;
             font-family: inherit;
+            -webkit-appearance: none;
+            appearance: none;
         }
         .input-field:focus {
             border-color: #3b82f6;
@@ -209,20 +184,21 @@
         .status-bar {
             background: #0f172a;
             border-radius: 60px;
-            padding: 12px 18px;
+            padding: 10px 16px;
             text-align: center;
-            font-size: 14px;
-            margin: 14px 0 8px;
+            font-size: 13px;
+            margin: 8px 0 10px;
             color: #94a3b8;
             border: 1px solid #2d3b52;
-            min-height: 50px;
+            min-height: 44px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 6px;
             transition: 0.2s;
             font-weight: 450;
-            line-height: 1.4;
+            line-height: 1.3;
+            flex-shrink: 0;
         }
         .status-bar.success {
             color: #86efac;
@@ -239,35 +215,122 @@
             border-color: #3b82f6;
             background: #0f1a2e;
         }
-        .action-row {
+        .controls-grid {
             display: flex;
-            gap: 12px;
-            margin-top: 4px;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin: 4px 0 8px;
+            flex-shrink: 0;
         }
-        .action-row .btn {
-            flex: 1;
+        .btn {
+            background: #2d3b52;
+            border: none;
+            border-radius: 60px;
+            padding: 12px 16px;
+            font-size: 15px;
+            font-weight: 600;
+            color: #f8fafc;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            flex: 1 1 auto;
+            min-width: 90px;
+            transition: all 0.15s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            cursor: pointer;
+            border: 1px solid #475569;
+            letter-spacing: 0.3px;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .btn:active {
+            transform: scale(0.94);
+        }
+        .btn-primary {
+            background: #2563eb;
+            border-color: #3b82f6;
+            color: white;
+        }
+        .btn-primary:active { background: #1d4ed8; }
+        .btn-success {
+            background: #16a34a;
+            border-color: #22c55e;
+            color: white;
+        }
+        .btn-success:active { background: #15803d; }
+        .btn-danger {
+            background: #dc2626;
+            border-color: #ef4444;
+            color: white;
+        }
+        .btn-danger:active { background: #b91c1c; }
+        .btn-share {
+            background: #7c3aed;
+            border-color: #8b5cf6;
+            color: white;
+        }
+        .btn-share:active { background: #6d28d9; }
+        .btn:disabled {
+            opacity: 0.4;
+            transform: scale(0.96);
+            pointer-events: none;
+            filter: grayscale(0.4);
         }
         .btn-group-2 {
             display: flex;
-            gap: 12px;
-            margin-top: 6px;
+            gap: 10px;
+            margin-top: 4px;
+            flex-shrink: 0;
         }
         .btn-group-2 .btn {
             flex: 1;
         }
         .footer-note {
             text-align: center;
-            font-size: 12px;
+            font-size: 11px;
             color: #475569;
-            margin-top: 16px;
+            margin-top: 12px;
             letter-spacing: 0.2px;
             border-top: 1px solid #1e293b;
-            padding-top: 16px;
+            padding-top: 12px;
+            flex-shrink: 0;
         }
         @media (max-width: 420px) {
-            .app-container { padding: 16px; }
-            .btn { min-width: 80px; padding: 12px 14px; font-size: 14px; }
-            .input-field { font-size: 18px; padding: 14px 16px; }
+            .app-container { padding: 12px 12px 16px; }
+            .btn { min-width: 70px; padding: 10px 12px; font-size: 13px; }
+            .input-field { font-size: 18px; padding: 12px 16px; }
+            .header h1 { font-size: 19px; }
+        }
+        @media (min-height: 800px) {
+            .camera-frame { min-height: 280px; }
+        }
+        /* حالت نمایش در مرورگر دسکتاپ */
+        @media (display-mode: standalone) {
+            .app-container {
+                border: none;
+                border-radius: 0;
+            }
+        }
+        /* حالت نمایش در برنامه (PWA) */
+        @media (display-mode: fullscreen) {
+            .app-container {
+                border: none;
+                border-radius: 0;
+            }
+        }
+        /* حالت نمایش در مرورگر معمولی */
+        @media (display-mode: browser) {
+            .app-container {
+                border-radius: 40px;
+                border: 1px solid #334155;
+            }
+            body {
+                background: #0b1120;
+                padding: 12px;
+            }
         }
     </style>
 </head>
@@ -278,7 +341,7 @@
         <h1>
             <span>📸</span> کد ملی
         </h1>
-        <div class="badge">iPhone</div>
+        <div class="badge">وب‌اپ</div>
     </div>
 
     <!-- دوربین / کانواس -->
@@ -311,7 +374,7 @@
             ⬇️ دانلود
         </button>
         <button id="shareBtn" class="btn btn-share" disabled>
-            🔗 اشتراک‌گذاری
+            🔗 اشتراک
         </button>
     </div>
 
@@ -531,13 +594,11 @@
                 return;
             }
 
-            // دریافت کد ملی برای نام فایل
             const code = getValidNationalCode();
             const codeDisplay = code || 'unknown';
             const fileName = generateFileName();
 
             try {
-                // ساخت فایل با نام حاوی کد ملی
                 const file = new File([photoBlob], fileName, { type: 'image/jpeg' });
                 const shareData = {
                     title: 'عکس با کد ملی',
@@ -611,7 +672,7 @@
             }
         });
 
-        console.log('وب‌اپ عکس با کد ملی + اشتراک‌گذاری با نام فایل آماده است.');
+        console.log('وب‌اپ عکس با کد ملی + اشتراک‌گذاری آماده است.');
     })();
 </script>
 </body>
