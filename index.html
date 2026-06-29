@@ -56,12 +56,10 @@
             -webkit-overflow-scrolling: touch;
             position: relative;
         }
-        /* حذف اسکرول‌بار در آیفون */
         .app-container::-webkit-scrollbar {
             width: 0;
             background: transparent;
         }
-        /* حالت تمام‌صفحه در آیفون */
         @supports (padding: max(0px)) {
             .app-container {
                 padding-left: max(16px, env(safe-area-inset-left));
@@ -307,21 +305,18 @@
         @media (min-height: 800px) {
             .camera-frame { min-height: 280px; }
         }
-        /* حالت نمایش در مرورگر دسکتاپ */
         @media (display-mode: standalone) {
             .app-container {
                 border: none;
                 border-radius: 0;
             }
         }
-        /* حالت نمایش در برنامه (PWA) */
         @media (display-mode: fullscreen) {
             .app-container {
                 border: none;
                 border-radius: 0;
             }
         }
-        /* حالت نمایش در مرورگر معمولی */
         @media (display-mode: browser) {
             .app-container {
                 border-radius: 40px;
@@ -405,6 +400,7 @@
         let photoDataURL = null;
         let photoBlob = null;
         let cameraStarted = false;
+        let currentNationalCode = null;
 
         // ---- helpers ----
         function setStatus(msg, type = 'info') {
@@ -442,6 +438,7 @@
         function generateFileName() {
             const code = getValidNationalCode();
             const codePart = code || 'unknown';
+            currentNationalCode = codePart;
             const now = new Date();
             const datePart = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
             return `${codePart}_${datePart}.jpg`;
@@ -595,19 +592,30 @@
             }
 
             const code = getValidNationalCode();
-            const codeDisplay = code || 'unknown';
+            if (!code) {
+                setStatus('⚠️ برای اشتراک‌گذاری، کد ملی ۱۰ رقمی را وارد کنید.', 'error');
+                return;
+            }
+
             const fileName = generateFileName();
+            const codeDisplay = code;
 
             try {
+                // ایجاد فایل با نام حاوی کد ملی
                 const file = new File([photoBlob], fileName, { type: 'image/jpeg' });
+                
+                // ایجاد یک فایل متنی جداگانه با کد ملی برای اطمینان بیشتر
+                const textBlob = new Blob([`کد ملی: ${codeDisplay}\nتاریخ: ${new Date().toLocaleDateString('fa-IR')}\n`], { type: 'text/plain' });
+                const textFile = new File([textBlob], `کدملی_${codeDisplay}.txt`, { type: 'text/plain' });
+
                 const shareData = {
-                    title: 'عکس با کد ملی',
-                    text: `عکس گرفته شده با کد ملی: ${codeDisplay}`,
-                    files: [file]
+                    title: `عکس با کد ملی ${codeDisplay}`,
+                    text: `📸 عکس گرفته شده با کد ملی: ${codeDisplay}\n📅 تاریخ: ${new Date().toLocaleDateString('fa-IR')}`,
+                    files: [file, textFile] // ارسال هر دو فایل
                 };
 
                 await navigator.share(shareData);
-                setStatus(`✅ عکس با نام "${fileName}" به اشتراک گذاشته شد.`, 'success');
+                setStatus(`✅ عکس با کد ملی ${codeDisplay} به اشتراک گذاشته شد.`, 'success');
             } catch (err) {
                 if (err.name === 'AbortError') {
                     setStatus('ℹ️ اشتراک‌گذاری لغو شد.', 'info');
@@ -672,7 +680,7 @@
             }
         });
 
-        console.log('وب‌اپ عکس با کد ملی + اشتراک‌گذاری آماده است.');
+        console.log('وب‌اپ عکس با کد ملی + اشتراک‌گذاری با نام فایل آماده است.');
     })();
 </script>
 </body>
