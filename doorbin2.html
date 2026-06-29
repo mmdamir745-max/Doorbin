@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>گرفتن عکس با کد ملی - آیفون</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: #0f172a;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 16px;
+            color: #e2e8f0;
+        }
+        .card {
+            max-width: 480px;
+            width: 100%;
+            background: #1e293b;
+            border-radius: 36px;
+            padding: 24px 20px 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            transition: all 0.2s;
+            border: 1px solid #334155;
+        }
+        h1 {
+            font-size: 22px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 12px;
+            letter-spacing: -0.3px;
+            color: #f1f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        h1 small {
+            font-size: 14px;
+            font-weight: 400;
+            color: #94a3b8;
+        }
+        .video-wrapper {
+            background: #0b1120;
+            border-radius: 28px;
+            overflow: hidden;
+            margin: 12px 0 18px;
+            position: relative;
+            aspect-ratio: 4 / 3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #334155;
+            box-shadow: inset 0 8px 12px rgba(0,0,0,0.5);
+        }
+        #video, #photoCanvas {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            background: #0b1120;
+        }
+        #photoCanvas {
+            display: none;
+            border-radius: 28px;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 6px;
+        }
+        .btn {
+            background: #2d3b52;
+            border: none;
+            border-radius: 60px;
+            padding: 14px 22px;
+            font-size: 16px;
+            font-weight: 500;
+            color: #f8fafc;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex: 1 1 auto;
+            min-width: 120px;
+            transition: all 0.15s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            cursor: pointer;
+            border: 1px solid #475569;
+        }
+        .btn-primary {
+            background: #2563eb;
+            border-color: #3b82f6;
+            color: white;
+        }
+        .btn-primary:active {
+            background: #1d4ed8;
+            transform: scale(0.96);
+        }
+        .btn-success {
+            background: #16a34a;
+            border-color: #22c55e;
+            color: white;
+        }
+        .btn-success:active {
+            background: #15803d;
+            transform: scale(0.96);
+        }
+        .btn-danger {
+            background: #dc2626;
+            border-color: #ef4444;
+            color: white;
+        }
+        .btn-danger:active {
+            background: #b91c1c;
+            transform: scale(0.96);
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            transform: scale(0.95);
+            pointer-events: none;
+        }
+        .input-group {
+            margin: 20px 0 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .input-group label {
+            font-size: 15px;
+            font-weight: 500;
+            color: #cbd5e1;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .input-group input {
+            background: #0f172a;
+            border: 2px solid #334155;
+            border-radius: 60px;
+            padding: 16px 20px;
+            font-size: 18px;
+            font-weight: 500;
+            color: #f1f5f9;
+            outline: none;
+            transition: 0.2s;
+            width: 100%;
+            letter-spacing: 1px;
+            text-align: center;
+        }
+        .input-group input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.3);
+        }
+        .input-group input::placeholder {
+            color: #64748b;
+            font-weight: 300;
+            letter-spacing: 0;
+        }
+        .status {
+            background: #0b1120;
+            border-radius: 60px;
+            padding: 12px 18px;
+            text-align: center;
+            font-size: 14px;
+            margin: 14px 0 8px;
+            color: #94a3b8;
+            border: 1px solid #2d3b52;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .status.success {
+            color: #86efac;
+            border-color: #16a34a;
+        }
+        .status.error {
+            color: #fca5a5;
+            border-color: #dc2626;
+        }
+        .flex-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .flex-row .btn {
+            flex: 1;
+        }
+        @media (max-width: 420px) {
+            .card { padding: 16px; }
+            .btn { min-width: 100px; padding: 12px 16px; }
+        }
+        /* شبیه‌سازی حالت آیفون (نکته ظاهری) */
+        .ios-notch {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>
+        📸 عکس با کد ملی
+        <small>iPhone</small>
+    </h1>
+
+    <!-- نمایش دوربین / عکس -->
+    <div class="video-wrapper">
+        <video id="video" autoplay playsinline muted></video>
+        <canvas id="photoCanvas"></canvas>
+    </div>
+
+    <!-- ورودی کد ملی -->
+    <div class="input-group">
+        <label for="nationalCode">🇮🇷 کد ملی (۱۰ رقم)</label>
+        <input type="text" id="nationalCode" inputmode="numeric" maxlength="10" placeholder="مثال: ۱۲۳۴۵۶۷۸۹۰" value="">
+    </div>
+
+    <!-- وضعیت -->
+    <div id="statusMessage" class="status">📷 دوربین در حال راه‌اندازی...</div>
+
+    <!-- دکمه‌ها -->
+    <div class="controls">
+        <button id="captureBtn" class="btn btn-primary">📸 عکس بگیر</button>
+        <button id="retakeBtn" class="btn btn-danger" disabled>🔄 دوباره</button>
+    </div>
+
+    <div style="margin-top: 16px;">
+        <button id="downloadBtn" class="btn btn-success" disabled style="width:100%;">
+            ⬇️ دانلود با کد ملی
+        </button>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // عناصر
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('photoCanvas');
+        const ctx = canvas.getContext('2d');
+        const nationalCodeInput = document.getElementById('nationalCode');
+        const statusDiv = document.getElementById('statusMessage');
+        const captureBtn = document.getElementById('captureBtn');
+        const retakeBtn = document.getElementById('retakeBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+
+        // حالت‌ها
+        let stream = null;
+        let isCameraReady = false;
+        let photoTaken = false;          // true یعنی عکس گرفته شده و در canvas نمایش داده می‌شود
+        let capturedImageData = null;    // داده‌های عکس (برای دانلود)
+
+        // ---- helper status ----
+        function setStatus(msg, type = 'info') {
+            statusDiv.textContent = msg;
+            statusDiv.className = 'status';
+            if (type === 'success') statusDiv.classList.add('success');
+            else if (type === 'error') statusDiv.classList.add('error');
+        }
+
+        // ---- تنظیم دوربین ----
+        async function startCamera() {
+            try {
+                // درخواست دوربین عقب (ترجیحاً) یا جلو
+                const constraints = {
+                    video: {
+                        facingMode: { ideal: 'environment' }, // دوربین عقب برای آیفون
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    },
+                    audio: false
+                };
+
+                stream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = stream;
+                await video.play();
+
+                // تطبیق canvas با ابعاد ویدیو
+                const track = stream.getVideoTracks()[0];
+                const settings = track.getSettings();
+                const width = settings.width || 1280;
+                const height = settings.height || 720;
+                canvas.width = width;
+                canvas.height = height;
+
+                isCameraReady = true;
+                photoTaken = false;
+                capturedImageData = null;
+                downloadBtn.disabled = true;
+                retakeBtn.disabled = true;
+                setStatus('✅ دوربین روشن، آماده عکس‌برداری', 'success');
+
+                // نمایش ویدیو، پنهان کردن کانوس
+                video.style.display = 'block';
+                canvas.style.display = 'none';
+
+                // فعال‌سازی دکمه عکس
+                captureBtn.disabled = false;
+                // در صورتی که قبلاً غیرفعال بوده
+            } catch (err) {
+                console.error('خطا در دسترسی به دوربین:', err);
+                setStatus('❌ دسترسی به دوربین امکان‌پذیر نیست. (اجازه دسترسی به دوربین را بررسی کنید)', 'error');
+                isCameraReady = false;
+                captureBtn.disabled = true;
+                downloadBtn.disabled = true;
+                retakeBtn.disabled = true;
+                // نمایش خطا
+            }
+        }
+
+        // ---- توقف دوربین ----
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            video.srcObject = null;
+            isCameraReady = false;
+        }
+
+        // ---- گرفتن عکس ----
+        function capturePhoto() {
+            if (!isCameraReady || !video.videoWidth || !video.videoHeight) {
+                setStatus('⚠️ دوربین آماده نیست. لطفاً چند ثانیه صبر کنید.', 'error');
+                return;
+            }
+
+            // تنظیم canvas با ابعاد ویدیو (دقیق)
+            const vw = video.videoWidth;
+            const vh = video.videoHeight;
+            canvas.width = vw;
+            canvas.height = vh;
+            ctx.drawImage(video, 0, 0, vw, vh);
+
+            // ذخیره داده عکس
+            capturedImageData = canvas.toDataURL('image/jpeg', 0.95);
+
+            // نمایش canvas و پنهان کردن ویدیو
+            video.style.display = 'none';
+            canvas.style.display = 'block';
+
+            photoTaken = true;
+            downloadBtn.disabled = false;
+            retakeBtn.disabled = false;
+            captureBtn.disabled = true; // غیرفعال تا عکس جدید گرفته نشود
+
+            setStatus('✅ عکس گرفته شد. کد ملی را وارد کرده و دانلود کنید.', 'success');
+
+            // (اختیاری) توقف دوربین برای صرفه‌جویی در مصرف باتری (آیفون)
+            // اما برای امکان عکس مجدد، بهتر است دوربین را روشن نگه داریم یا ری‌استارت کنیم.
+            // ما دوربین را روشن نگه می‌داریم اما ویدیو مخفی است.
+        }
+
+        // ---- بازگشت به حالت دوربین (دوباره) ----
+        function retake() {
+            if (!isCameraReady) {
+                // اگر دوربین قطع شده، دوباره راه‌اندازی
+                startCamera();
+                return;
+            }
+
+            // نمایش ویدیو، مخفی کردن کانوس
+            video.style.display = 'block';
+            canvas.style.display = 'none';
+
+            photoTaken = false;
+            capturedImageData = null;
+            downloadBtn.disabled = true;
+            retakeBtn.disabled = true;
+            captureBtn.disabled = false;
+
+            setStatus('🔄 دوربین دوباره فعال شد. آماده عکس‌برداری.', 'success');
+        }
+
+        // ---- دانلود با کد ملی ----
+        function downloadWithNationalCode() {
+            if (!photoTaken || !capturedImageData) {
+                setStatus('⚠️ ابتدا عکس بگیرید.', 'error');
+                return;
+            }
+
+            // اعتبارسنجی کد ملی (۱۰ رقم)
+            let code = nationalCodeInput.value.trim();
+            // حذف کاراکترهای غیر عددی
+            code = code.replace(/\D/g, '');
+            if (code.length !== 10) {
+                setStatus('⚠️ کد ملی باید دقیقاً ۱۰ رقم باشد.', 'error');
+                return;
+            }
+
+            // ساخت نام فایل: کد_ملی_تاریخ
+            const now = new Date();
+            const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+            const fileName = `${code}_${dateStr}.jpg`;
+
+            // ایجاد لینک دانلود
+            const link = document.createElement('a');
+            link.href = capturedImageData;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            setStatus(`✅ عکس با نام "${fileName}" دانلود شد.`, 'success');
+        }
+
+        // ---- رویدادها ----
+        captureBtn.addEventListener('click', capturePhoto);
+        retakeBtn.addEventListener('click', retake);
+        downloadBtn.addEventListener('click', downloadWithNationalCode);
+
+        // ---- ورودی کد ملی فقط عدد ----
+        nationalCodeInput.addEventListener('input', function(e) {
+            this.value = this.value.replace(/\D/g, '').slice(0, 10);
+        });
+
+        // ---- شروع اولیه ----
+        async function init() {
+            setStatus('📱 درخواست دسترسی به دوربین...', 'info');
+            await startCamera();
+
+            // اگر دوربین شروع نشد، پیام خطا
+            if (!isCameraReady) {
+                // تلاش مجدد با دکمه retake (که دوباره startCamera می‌کند)
+                setStatus('⚠️ برای راه‌اندازی مجدد دوربین روی "دوباره" کلیک کنید.', 'error');
+            }
+        }
+
+        init();
+
+        // ---- مدیریت بسته شدن صفحه / پاکسازی ----
+        window.addEventListener('beforeunload', function() {
+            stopCamera();
+        });
+
+        // (اختیاری) در صورت قطع شدن استریم به هر دلیل
+        video.addEventListener('error', (e) => {
+            setStatus('❌ خطا در پخش ویدیو. دوباره تلاش کنید.', 'error');
+            isCameraReady = false;
+            captureBtn.disabled = true;
+        });
+
+        // وقتی دوربین آماده شد
+        video.addEventListener('loadedmetadata', () => {
+            if (video.videoWidth > 0 && video.videoHeight > 0) {
+                // تنظیم canvas با ابعاد ویدیو
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                setStatus('📷 دوربین آماده است. عکس بگیرید.', 'success');
+                isCameraReady = true;
+                captureBtn.disabled = false;
+            }
+        });
+
+        // در صورت بسته شدن دسترسی (مثلاً در آیفون)
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                // صفحه مخفی شد (می‌توانیم دوربین را نگه داریم)
+            } else {
+                // برگشت به صفحه: اگر دوربین قطع شده باشد، دوباره تلاش
+                if (!isCameraReady && !photoTaken) {
+                    startCamera();
+                }
+            }
+        });
+
+        // پشتیبانی از دکمه retake در صورت خطا
+        // در حالت قطع دوربین، retake دوباره startCamera را صدا می‌زند
+        // اما اگر دوربین فعال باشد فقط حالت را ریست می‌کند.
+        // برای امنیت بیشتر: اگر stream قطع شده، دوباره راه‌اندازی
+        // (در retake قبلاً این کار را کردیم)
+    })();
+</script>
+</body>
+</html>
