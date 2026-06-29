@@ -3,27 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="عکس با کد ملی">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#0b1120">
-    <meta name="apple-touch-fullscreen" content="yes">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📸</text></svg>">
     <title>وب‌اپ عکس با کد ملی</title>
+    <!-- JSZip برای ساخت فایل ZIP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- jsPDF برای ساخت فایل PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-        }
-        html, body {
-            height: 100%;
-            overflow: hidden;
-            position: fixed;
-            width: 100%;
-            top: 0;
-            left: 0;
         }
         body {
             background: #0b1120;
@@ -31,50 +20,29 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            min-height: 100vh;
             margin: 0;
-            padding: 0;
+            padding: 12px;
             color: #e2e8f0;
             -webkit-font-smoothing: antialiased;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
         }
         .app-container {
             max-width: 460px;
             width: 100%;
-            height: 100vh;
-            height: 100dvh;
             background: #1e293b;
-            display: flex;
-            flex-direction: column;
-            padding: 20px 16px 24px;
+            border-radius: 40px;
+            padding: 24px 20px 30px;
             box-shadow: 0 25px 50px -8px rgba(0,0,0,0.8);
             border: 1px solid #334155;
-            overflow-y: auto;
-            overflow-x: hidden;
-            -webkit-overflow-scrolling: touch;
-            position: relative;
-        }
-        .app-container::-webkit-scrollbar {
-            width: 0;
-            background: transparent;
-        }
-        @supports (padding: max(0px)) {
-            .app-container {
-                padding-left: max(16px, env(safe-area-inset-left));
-                padding-right: max(16px, env(safe-area-inset-right));
-                padding-top: max(20px, env(safe-area-inset-top));
-                padding-bottom: max(24px, env(safe-area-inset-bottom));
-            }
+            transition: all 0.2s;
+            backdrop-filter: blur(2px);
         }
         .header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 16px;
+            margin-bottom: 18px;
             padding: 0 4px;
-            flex-shrink: 0;
         }
         .header h1 {
             font-size: 22px;
@@ -101,12 +69,12 @@
             color: white;
             letter-spacing: 0.3px;
             border: 1px solid #3b82f6;
-            flex-shrink: 0;
         }
         .camera-frame {
             background: #0b1120;
-            border-radius: 28px;
+            border-radius: 32px;
             overflow: hidden;
+            margin: 6px 0 16px;
             position: relative;
             aspect-ratio: 4 / 3;
             display: flex;
@@ -114,8 +82,6 @@
             justify-content: center;
             border: 2px solid #2d3b52;
             box-shadow: inset 0 8px 16px rgba(0,0,0,0.6);
-            flex-shrink: 0;
-            min-height: 200px;
         }
         #video, #photoCanvas {
             width: 100%;
@@ -126,115 +92,29 @@
         }
         #photoCanvas {
             display: none;
-            border-radius: 26px;
-        }
-        .input-section {
-            margin: 14px 0 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            flex-shrink: 0;
-        }
-        .input-section label {
-            font-size: 14px;
-            font-weight: 500;
-            color: #cbd5e1;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding-right: 6px;
-        }
-        .input-section label i {
-            font-style: normal;
-            background: #1e293b;
-            padding: 0 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            color: #94a3b8;
-        }
-        .input-field {
-            background: #0f172a;
-            border: 2px solid #2d3b52;
-            border-radius: 60px;
-            padding: 14px 20px;
-            font-size: 20px;
-            font-weight: 600;
-            color: #f1f5f9;
-            outline: none;
-            transition: 0.2s;
-            width: 100%;
-            letter-spacing: 2px;
-            text-align: center;
-            font-family: inherit;
-            -webkit-appearance: none;
-            appearance: none;
-        }
-        .input-field:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 4px rgba(59,130,246,0.25);
-        }
-        .input-field::placeholder {
-            color: #475569;
-            font-weight: 400;
-            letter-spacing: 0.5px;
-            font-size: 16px;
-        }
-        .status-bar {
-            background: #0f172a;
-            border-radius: 60px;
-            padding: 10px 16px;
-            text-align: center;
-            font-size: 13px;
-            margin: 8px 0 10px;
-            color: #94a3b8;
-            border: 1px solid #2d3b52;
-            min-height: 44px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            transition: 0.2s;
-            font-weight: 450;
-            line-height: 1.3;
-            flex-shrink: 0;
-        }
-        .status-bar.success {
-            color: #86efac;
-            border-color: #16a34a;
-            background: #0b1f12;
-        }
-        .status-bar.error {
-            color: #fca5a5;
-            border-color: #dc2626;
-            background: #1f0f0f;
-        }
-        .status-bar.info {
-            color: #93c5fd;
-            border-color: #3b82f6;
-            background: #0f1a2e;
+            border-radius: 30px;
         }
         .controls-grid {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 12px;
             justify-content: center;
-            margin: 4px 0 8px;
-            flex-shrink: 0;
+            margin: 6px 0 12px;
         }
         .btn {
             background: #2d3b52;
             border: none;
             border-radius: 60px;
-            padding: 12px 16px;
-            font-size: 15px;
+            padding: 14px 20px;
+            font-size: 16px;
             font-weight: 600;
             color: #f8fafc;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 10px;
             flex: 1 1 auto;
-            min-width: 90px;
+            min-width: 110px;
             transition: all 0.15s ease;
             box-shadow: 0 4px 8px rgba(0,0,0,0.3);
             cursor: pointer;
@@ -242,7 +122,6 @@
             letter-spacing: 0.3px;
             touch-action: manipulation;
             user-select: none;
-            -webkit-tap-highlight-color: transparent;
         }
         .btn:active {
             transform: scale(0.94);
@@ -265,67 +144,144 @@
             color: white;
         }
         .btn-danger:active { background: #b91c1c; }
-        .btn-share {
-            background: #7c3aed;
-            border-color: #8b5cf6;
-            color: white;
+        .btn-outline {
+            background: transparent;
+            border: 1.5px solid #475569;
+            color: #cbd5e1;
         }
-        .btn-share:active { background: #6d28d9; }
+        .btn-outline:active { background: #1e293b; }
         .btn:disabled {
             opacity: 0.4;
             transform: scale(0.96);
             pointer-events: none;
             filter: grayscale(0.4);
         }
-        .btn-group-2 {
+        .btn-download-zip {
+            background: #7c3aed;
+            border-color: #8b5cf6;
+            color: white;
+        }
+        .btn-download-zip:active { background: #6d28d9; }
+        .btn-download-pdf {
+            background: #dc2626;
+            border-color: #ef4444;
+            color: white;
+        }
+        .btn-download-pdf:active { background: #b91c1c; }
+        .input-section {
+            margin: 18px 0 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .input-section label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #cbd5e1;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding-right: 6px;
+        }
+        .input-section label i {
+            font-style: normal;
+            background: #1e293b;
+            padding: 0 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        .input-field {
+            background: #0f172a;
+            border: 2px solid #2d3b52;
+            border-radius: 60px;
+            padding: 16px 24px;
+            font-size: 20px;
+            font-weight: 600;
+            color: #f1f5f9;
+            outline: none;
+            transition: 0.2s;
+            width: 100%;
+            letter-spacing: 2px;
+            text-align: center;
+            font-family: inherit;
+        }
+        .input-field:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 4px rgba(59,130,246,0.25);
+        }
+        .input-field::placeholder {
+            color: #475569;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+            font-size: 16px;
+        }
+        .status-bar {
+            background: #0f172a;
+            border-radius: 60px;
+            padding: 12px 18px;
+            text-align: center;
+            font-size: 14px;
+            margin: 14px 0 8px;
+            color: #94a3b8;
+            border: 1px solid #2d3b52;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: 0.2s;
+            font-weight: 450;
+            line-height: 1.4;
+        }
+        .status-bar.success {
+            color: #86efac;
+            border-color: #16a34a;
+            background: #0b1f12;
+        }
+        .status-bar.error {
+            color: #fca5a5;
+            border-color: #dc2626;
+            background: #1f0f0f;
+        }
+        .status-bar.info {
+            color: #93c5fd;
+            border-color: #3b82f6;
+            background: #0f1a2e;
+        }
+        .action-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 4px;
+        }
+        .action-row .btn {
+            flex: 1;
+        }
+        .download-row {
             display: flex;
             gap: 10px;
-            margin-top: 4px;
-            flex-shrink: 0;
+            margin-top: 8px;
         }
-        .btn-group-2 .btn {
+        .download-row .btn {
             flex: 1;
+            min-width: 0;
+            padding: 14px 10px;
+            font-size: 14px;
         }
         .footer-note {
             text-align: center;
-            font-size: 11px;
+            font-size: 12px;
             color: #475569;
-            margin-top: 12px;
+            margin-top: 16px;
             letter-spacing: 0.2px;
             border-top: 1px solid #1e293b;
-            padding-top: 12px;
-            flex-shrink: 0;
+            padding-top: 16px;
         }
         @media (max-width: 420px) {
-            .app-container { padding: 12px 12px 16px; }
-            .btn { min-width: 70px; padding: 10px 12px; font-size: 13px; }
-            .input-field { font-size: 18px; padding: 12px 16px; }
-            .header h1 { font-size: 19px; }
-        }
-        @media (min-height: 800px) {
-            .camera-frame { min-height: 280px; }
-        }
-        @media (display-mode: standalone) {
-            .app-container {
-                border: none;
-                border-radius: 0;
-            }
-        }
-        @media (display-mode: fullscreen) {
-            .app-container {
-                border: none;
-                border-radius: 0;
-            }
-        }
-        @media (display-mode: browser) {
-            .app-container {
-                border-radius: 40px;
-                border: 1px solid #334155;
-            }
-            body {
-                background: #0b1120;
-                padding: 12px;
-            }
+            .app-container { padding: 16px; }
+            .btn { min-width: 80px; padding: 12px 14px; font-size: 14px; }
+            .input-field { font-size: 18px; padding: 14px 16px; }
+            .download-row .btn { font-size: 12px; padding: 12px 8px; }
         }
     </style>
 </head>
@@ -336,7 +292,7 @@
         <h1>
             <span>📸</span> کد ملی
         </h1>
-        <div class="badge">وب‌اپ</div>
+        <div class="badge">iPhone</div>
     </div>
 
     <!-- دوربین / کانواس -->
@@ -363,18 +319,14 @@
         <button id="retakeBtn" class="btn btn-danger" disabled>🔄 دوباره</button>
     </div>
 
-    <!-- دکمه دانلود و اشتراک‌گذاری -->
-    <div class="btn-group-2">
-        <button id="downloadBtn" class="btn btn-success" disabled>
-            ⬇️ دانلود
-        </button>
-        <button id="shareBtn" class="btn btn-share" disabled>
-            🔗 اشتراک
-        </button>
+    <!-- دکمه‌های دانلود (ZIP و PDF) -->
+    <div class="download-row">
+        <button id="downloadZipBtn" class="btn btn-download-zip" disabled>📦 دانلود ZIP</button>
+        <button id="downloadPdfBtn" class="btn btn-download-pdf" disabled>📄 دانلود PDF</button>
     </div>
 
     <div class="footer-note">
-        • عکس با کیفیت بالا • نام فایل: کدملی_تاریخ.jpg
+        • عکس با کیفیت بالا • نام فایل: کدملی_تاریخ
     </div>
 </div>
 
@@ -390,17 +342,15 @@
         const statusDiv = document.getElementById('statusMessage');
         const captureBtn = document.getElementById('captureBtn');
         const retakeBtn = document.getElementById('retakeBtn');
-        const downloadBtn = document.getElementById('downloadBtn');
-        const shareBtn = document.getElementById('shareBtn');
+        const downloadZipBtn = document.getElementById('downloadZipBtn');
+        const downloadPdfBtn = document.getElementById('downloadPdfBtn');
 
         // ---- state ----
         let mediaStream = null;
         let isCameraActive = false;
         let isPhotoTaken = false;
         let photoDataURL = null;
-        let photoBlob = null;
         let cameraStarted = false;
-        let currentNationalCode = null;
 
         // ---- helpers ----
         function setStatus(msg, type = 'info') {
@@ -411,37 +361,24 @@
             else if (type === 'info') statusDiv.classList.add('info');
         }
 
-        // ---- تبدیل dataURL به Blob ----
-        function dataURLToBlob(dataURL) {
-            const parts = dataURL.split(',');
-            const mime = parts[0].match(/:(.*?);/)[1];
-            const bstr = atob(parts[1]);
-            let n = bstr.length;
-            const u8arr = new Uint8Array(n);
-            while (n--) {
-                u8arr[n] = bstr.charCodeAt(n);
-            }
-            return new Blob([u8arr], { type: mime });
-        }
-
-        // ---- دریافت کد ملی معتبر ----
-        function getValidNationalCode() {
-            let rawCode = nationalCodeInput.value.trim();
-            rawCode = rawCode.replace(/\D/g, '');
-            if (rawCode.length === 10) {
-                return rawCode;
-            }
-            return null;
-        }
-
-        // ---- ساخت نام فایل با کد ملی و تاریخ ----
-        function generateFileName() {
-            const code = getValidNationalCode();
-            const codePart = code || 'unknown';
-            currentNationalCode = codePart;
+        function getFormattedDate() {
             const now = new Date();
-            const datePart = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-            return `${codePart}_${datePart}.jpg`;
+            return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+        }
+
+        function getNationalCode() {
+            let raw = nationalCodeInput.value.trim();
+            raw = raw.replace(/\D/g, '');
+            return raw;
+        }
+
+        function validateNationalCode() {
+            const code = getNationalCode();
+            if (code.length !== 10) {
+                setStatus('⚠️ کد ملی باید دقیقاً ۱۰ رقم باشد.', 'error');
+                return null;
+            }
+            return code;
         }
 
         // ---- راه‌اندازی دوربین ----
@@ -472,15 +409,14 @@
                 cameraStarted = true;
                 isPhotoTaken = false;
                 photoDataURL = null;
-                photoBlob = null;
 
                 video.style.display = 'block';
                 canvas.style.display = 'none';
 
                 captureBtn.disabled = false;
                 retakeBtn.disabled = true;
-                downloadBtn.disabled = true;
-                shareBtn.disabled = true;
+                downloadZipBtn.disabled = true;
+                downloadPdfBtn.disabled = true;
 
                 setStatus('✅ دوربین آماده است. عکس بگیرید.', 'success');
             } catch (err) {
@@ -490,8 +426,8 @@
                 cameraStarted = false;
                 captureBtn.disabled = true;
                 retakeBtn.disabled = true;
-                downloadBtn.disabled = true;
-                shareBtn.disabled = true;
+                downloadZipBtn.disabled = true;
+                downloadPdfBtn.disabled = true;
             }
         }
 
@@ -519,21 +455,20 @@
             ctx.drawImage(video, 0, 0, vw, vh);
 
             photoDataURL = canvas.toDataURL('image/jpeg', 0.95);
-            photoBlob = dataURLToBlob(photoDataURL);
 
             video.style.display = 'none';
             canvas.style.display = 'block';
 
             isPhotoTaken = true;
-            downloadBtn.disabled = false;
-            shareBtn.disabled = false;
+            downloadZipBtn.disabled = false;
+            downloadPdfBtn.disabled = false;
             retakeBtn.disabled = false;
             captureBtn.disabled = true;
 
-            setStatus('✅ عکس گرفته شد. کد ملی را وارد و دانلود یا اشتراک‌گذاری کنید.', 'success');
+            setStatus('✅ عکس گرفته شد. کد ملی را وارد و دانلود کنید.', 'success');
         }
 
-        // ---- دوباره (بازگشت به دوربین) ----
+        // ---- دوباره ----
         function retakePhoto() {
             if (!isCameraActive || !cameraStarted) {
                 stopCameraTracks();
@@ -546,93 +481,117 @@
 
             isPhotoTaken = false;
             photoDataURL = null;
-            photoBlob = null;
-            downloadBtn.disabled = true;
-            shareBtn.disabled = true;
+            downloadZipBtn.disabled = true;
+            downloadPdfBtn.disabled = true;
             retakeBtn.disabled = true;
             captureBtn.disabled = false;
 
             setStatus('🔄 دوربین فعال. آماده عکس‌برداری.', 'success');
         }
 
-        // ---- دانلود با کد ملی ----
-        function downloadWithCode() {
+        // ---- دانلود به صورت ZIP ----
+        function downloadAsZip() {
             if (!isPhotoTaken || !photoDataURL) {
                 setStatus('⚠️ ابتدا عکس بگیرید.', 'error');
                 return;
             }
 
-            const code = getValidNationalCode();
-            if (!code) {
-                setStatus('⚠️ کد ملی باید دقیقاً ۱۰ رقم باشد.', 'error');
-                return;
+            const code = validateNationalCode();
+            if (!code) return;
+
+            const datePart = getFormattedDate();
+            const fileName = `${code}_${datePart}.jpg`;
+
+            try {
+                const base64Data = photoDataURL.split(',')[1];
+                
+                const zip = new JSZip();
+                zip.file(fileName, base64Data, { base64: true });
+                
+                zip.generateAsync({ type: 'blob' }).then(function(content) {
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(content);
+                    link.download = `${code}_${datePart}.zip`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(link.href);
+                    
+                    setStatus(`✅ دانلود ZIP: "${code}_${datePart}.zip"`, 'success');
+                }).catch(function(err) {
+                    console.error('ZIP error:', err);
+                    setStatus('❌ خطا در ساخت فایل ZIP', 'error');
+                });
+            } catch (err) {
+                console.error('ZIP error:', err);
+                setStatus('❌ خطا در ساخت فایل ZIP', 'error');
             }
-
-            const fileName = generateFileName();
-            const link = document.createElement('a');
-            link.href = photoDataURL;
-            link.download = fileName;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-
-            setStatus(`✅ دانلود شد: "${fileName}"`, 'success');
         }
 
-        // ---- اشتراک‌گذاری عکس با کد ملی در نام فایل ----
-        async function sharePhoto() {
-            if (!isPhotoTaken || !photoBlob) {
+        // ---- دانلود به صورت PDF ----
+        function downloadAsPdf() {
+            if (!isPhotoTaken || !photoDataURL) {
                 setStatus('⚠️ ابتدا عکس بگیرید.', 'error');
                 return;
             }
 
-            if (!navigator.share) {
-                setStatus('⚠️ مرورگر از اشتراک‌گذاری پشتیبانی نمی‌کند. از دکمه دانلود استفاده کنید.', 'error');
-                return;
-            }
+            const code = validateNationalCode();
+            if (!code) return;
 
-            const code = getValidNationalCode();
-            if (!code) {
-                setStatus('⚠️ برای اشتراک‌گذاری، کد ملی ۱۰ رقمی را وارد کنید.', 'error');
-                return;
-            }
-
-            const fileName = generateFileName();
-            const codeDisplay = code;
+            const datePart = getFormattedDate();
+            const fileName = `${code}_${datePart}.pdf`;
 
             try {
-                // ایجاد فایل با نام حاوی کد ملی
-                const file = new File([photoBlob], fileName, { type: 'image/jpeg' });
-                
-                // ایجاد یک فایل متنی جداگانه با کد ملی برای اطمینان بیشتر
-                const textBlob = new Blob([`کد ملی: ${codeDisplay}\nتاریخ: ${new Date().toLocaleDateString('fa-IR')}\n`], { type: 'text/plain' });
-                const textFile = new File([textBlob], `کدملی_${codeDisplay}.txt`, { type: 'text/plain' });
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const pageWidth = pdf.internal.pageSize.getWidth();
+                const pageHeight = pdf.internal.pageSize.getHeight();
 
-                const shareData = {
-                    title: `عکس با کد ملی ${codeDisplay}`,
-                    text: `📸 عکس گرفته شده با کد ملی: ${codeDisplay}\n📅 تاریخ: ${new Date().toLocaleDateString('fa-IR')}`,
-                    files: [file, textFile] // ارسال هر دو فایل
+                const imgData = photoDataURL;
+                const img = new Image();
+                img.onload = function() {
+                    const imgRatio = img.width / img.height;
+                    let finalWidth = pageWidth - 20;
+                    let finalHeight = finalWidth / imgRatio;
+                    
+                    if (finalHeight > pageHeight - 20) {
+                        finalHeight = pageHeight - 20;
+                        finalWidth = finalHeight * imgRatio;
+                    }
+                    
+                    const x = (pageWidth - finalWidth) / 2;
+                    const y = (pageHeight - finalHeight) / 2;
+                    
+                    pdf.addImage(imgData, 'JPEG', x, y, finalWidth, finalHeight);
+                    pdf.setFontSize(10);
+                    pdf.setTextColor(100);
+                    pdf.text(`کد ملی: ${code} - ${datePart}`, pageWidth/2, pageHeight - 10, { align: 'center' });
+                    
+                    const pdfBlob = pdf.output('blob');
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(pdfBlob);
+                    link.download = fileName;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(link.href);
+                    
+                    setStatus(`✅ دانلود PDF: "${fileName}"`, 'success');
                 };
-
-                await navigator.share(shareData);
-                setStatus(`✅ عکس با کد ملی ${codeDisplay} به اشتراک گذاشته شد.`, 'success');
+                img.src = photoDataURL;
             } catch (err) {
-                if (err.name === 'AbortError') {
-                    setStatus('ℹ️ اشتراک‌گذاری لغو شد.', 'info');
-                } else {
-                    console.error('خطا در اشتراک‌گذاری:', err);
-                    setStatus('❌ خطا در اشتراک‌گذاری. لطفاً دوباره تلاش کنید.', 'error');
-                }
+                console.error('PDF error:', err);
+                setStatus('❌ خطا در ساخت فایل PDF', 'error');
             }
         }
 
         // ---- رویدادها ----
         captureBtn.addEventListener('click', capturePhoto);
         retakeBtn.addEventListener('click', retakePhoto);
-        downloadBtn.addEventListener('click', downloadWithCode);
-        shareBtn.addEventListener('click', sharePhoto);
+        downloadZipBtn.addEventListener('click', downloadAsZip);
+        downloadPdfBtn.addEventListener('click', downloadAsPdf);
 
-        // ---- ورودی کد ملی (فقط عدد و محدودیت) ----
+        // ---- ورودی کد ملی ----
         nationalCodeInput.addEventListener('input', function() {
             this.value = this.value.replace(/\D/g, '').slice(0, 10);
         });
@@ -640,16 +599,14 @@
         // ---- شروع اولیه ----
         startCamera();
 
-        // ---- در صورت بسته شدن تب، استریم را آزاد کن ----
+        // ---- در صورت بسته شدن تب ----
         window.addEventListener('beforeunload', function() {
             stopCameraTracks();
         });
 
-        // ---- اگر دوربین به هر دلیل قطع شد ----
+        // ---- برگشت به صفحه ----
         document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
-                // صفحه مخفی شد – کاری نمی‌کنیم
-            } else {
+            if (!document.hidden) {
                 if (!isCameraActive && !isPhotoTaken) {
                     stopCameraTracks();
                     startCamera();
@@ -660,14 +617,14 @@
             }
         });
 
-        // ---- اگر ویدیو خطا داد ----
+        // ---- خطای ویدیو ----
         video.addEventListener('error', (e) => {
             setStatus('❌ خطا در پخش ویدیو. دوباره تلاش کنید.', 'error');
             isCameraActive = false;
             captureBtn.disabled = true;
         });
 
-        // ---- وقتی ویدیو آماده شد ----
+        // ---- ویدیو آماده شد ----
         video.addEventListener('loadedmetadata', () => {
             if (video.videoWidth > 0 && video.videoHeight > 0) {
                 canvas.width = video.videoWidth;
@@ -680,7 +637,7 @@
             }
         });
 
-        console.log('وب‌اپ عکس با کد ملی + اشتراک‌گذاری با نام فایل آماده است.');
+        console.log('وب‌اپ عکس با کد ملی آماده است (ZIP + PDF)');
     })();
 </script>
 </body>
