@@ -9,735 +9,667 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             background: #0b1120;
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 12px;
-            color: #e2e8f0;
+            display: flex; justify-content: center; align-items: flex-start;
+            min-height: 100vh; padding: 12px; color: #e2e8f0;
             -webkit-font-smoothing: antialiased;
         }
         .app-container {
-            max-width: 460px;
-            width: 100%;
-            background: #1e293b;
-            border-radius: 40px;
-            padding: 24px 20px 30px;
+            max-width: 460px; width: 100%;
+            background: #1e293b; border-radius: 32px;
+            padding: 20px 16px 24px;
             box-shadow: 0 25px 50px -8px rgba(0,0,0,0.8);
             border: 1px solid #334155;
         }
         .header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 18px;
-            padding: 0 4px;
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 14px; padding: 0 4px;
         }
         .header h1 {
-            font-size: 22px;
-            font-weight: 700;
+            font-size: 20px; font-weight: 700;
             background: linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; display: flex; align-items: center; gap: 8px;
         }
-        .header h1 span {
-            font-size: 26px;
-            -webkit-text-fill-color: initial;
-        }
-        .header .badge {
-            background: #2563eb;
-            padding: 6px 14px;
-            border-radius: 40px;
-            font-size: 12px;
-            font-weight: 600;
-            color: white;
-            border: 1px solid #3b82f6;
-        }
+        .header h1 span { font-size: 24px; -webkit-text-fill-color: initial; }
+        .badge { background: #2563eb; padding: 5px 12px; border-radius: 40px; font-size: 12px; font-weight: 600; color: white; border: 1px solid #3b82f6; }
+
+        /* ===== CAMERA ===== */
         .camera-frame {
-            background: #0b1120;
-            border-radius: 32px;
-            overflow: hidden;
-            margin: 6px 0 16px;
-            position: relative;
-            aspect-ratio: 4 / 3;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            background: #0b1120; border-radius: 24px; overflow: hidden;
+            margin: 0 0 12px; position: relative; aspect-ratio: 4/3;
+            display: flex; align-items: center; justify-content: center;
             border: 2px solid #2d3b52;
-            box-shadow: inset 0 8px 16px rgba(0,0,0,0.6);
         }
-        #video, #photoCanvas {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-            background: #0b1120;
+        #video { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .cam-overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            display: flex; flex-direction: column;
+            justify-content: space-between; pointer-events: none;
         }
-        #photoCanvas {
+        .zoom-bar {
+            position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 8px; pointer-events: all;
+        }
+        .zoom-btn {
+            background: rgba(0,0,0,0.55); border: 1px solid rgba(255,255,255,0.2);
+            color: white; border-radius: 50%; width: 36px; height: 36px;
+            font-size: 13px; font-weight: 700; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            backdrop-filter: blur(6px); touch-action: manipulation;
+        }
+        .zoom-btn.active { background: rgba(37,99,235,0.8); border-color: #3b82f6; }
+
+        /* ===== EDITOR ===== */
+        .editor-frame {
+            background: #0b1120; border-radius: 24px; overflow: hidden;
+            margin: 0 0 12px; position: relative; aspect-ratio: 4/3;
+            display: none; align-items: center; justify-content: center;
+            border: 2px solid #2d3b52; touch-action: none;
+        }
+        #editCanvas {
+            max-width: 100%; max-height: 100%; display: block;
+            touch-action: none; cursor: crosshair;
+        }
+        .crop-hint {
+            position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.6); color: #fff; font-size: 12px;
+            padding: 4px 12px; border-radius: 20px; pointer-events: none;
             display: none;
-            border-radius: 30px;
         }
-        .controls-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            justify-content: center;
-            margin: 6px 0 12px;
+
+        /* ===== GALLERY ===== */
+        .gallery-scroll {
+            display: flex; gap: 8px; overflow-x: auto; padding: 4px 2px 8px;
+            scrollbar-width: none; margin-bottom: 10px;
         }
+        .gallery-scroll::-webkit-scrollbar { display: none; }
+        .gallery-thumb {
+            flex: 0 0 72px; height: 72px; border-radius: 12px;
+            object-fit: cover; border: 2px solid #334155; cursor: pointer;
+            transition: border-color 0.15s;
+        }
+        .gallery-thumb.selected { border-color: #3b82f6; }
+        .gallery-add {
+            flex: 0 0 72px; height: 72px; border-radius: 12px;
+            border: 2px dashed #475569; display: flex; align-items: center;
+            justify-content: center; font-size: 28px; cursor: pointer;
+            color: #64748b; background: #0f172a; transition: 0.15s;
+        }
+        .gallery-add:active { background: #1e293b; }
+
+        /* ===== EDIT TOOLS ===== */
+        .edit-tools {
+            display: none; flex-direction: column; gap: 8px; margin-bottom: 10px;
+        }
+        .slider-row {
+            display: flex; align-items: center; gap: 8px;
+        }
+        .slider-row label { font-size: 12px; color: #94a3b8; min-width: 60px; text-align: right; }
+        .slider-row input[type=range] {
+            flex: 1; accent-color: #3b82f6; height: 4px;
+        }
+        .slider-val { font-size: 11px; color: #64748b; min-width: 30px; text-align: left; }
+        .tool-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+        .tool-btn {
+            background: #2d3b52; border: 1px solid #475569; border-radius: 20px;
+            padding: 8px 14px; font-size: 13px; color: #e2e8f0; cursor: pointer;
+            touch-action: manipulation; transition: 0.15s; user-select: none;
+        }
+        .tool-btn:active { background: #3b82f6; border-color: #60a5fa; }
+        .tool-btn.active { background: #1d4ed8; border-color: #3b82f6; }
+
+        /* ===== INPUT ===== */
+        .input-section { margin: 10px 0 8px; display: flex; flex-direction: column; gap: 6px; }
+        .input-section label { font-size: 13px; font-weight: 500; color: #cbd5e1; padding-right: 4px; }
+        .input-field {
+            background: #0f172a; border: 2px solid #2d3b52; border-radius: 60px;
+            padding: 14px 20px; font-size: 20px; font-weight: 600; color: #f1f5f9;
+            outline: none; width: 100%; letter-spacing: 2px; text-align: center;
+            font-family: inherit; transition: 0.2s;
+        }
+        .input-field:focus { border-color: #3b82f6; box-shadow: 0 0 0 4px rgba(59,130,246,0.25); }
+        .input-field::placeholder { color: #475569; font-weight: 400; letter-spacing: 0.5px; font-size: 16px; }
+
+        /* ===== STATUS ===== */
+        .status-bar {
+            background: #0f172a; border-radius: 60px; padding: 10px 16px;
+            text-align: center; font-size: 13px; margin: 8px 0;
+            color: #94a3b8; border: 1px solid #2d3b52;
+            min-height: 44px; display: flex; align-items: center;
+            justify-content: center; gap: 6px; transition: 0.2s; line-height: 1.4;
+        }
+        .status-bar.success { color: #86efac; border-color: #16a34a; background: #0b1f12; }
+        .status-bar.error { color: #fca5a5; border-color: #dc2626; background: #1f0f0f; }
+        .status-bar.info { color: #93c5fd; border-color: #3b82f6; background: #0f1a2e; }
+
+        /* ===== BUTTONS ===== */
+        .controls-grid { display: flex; gap: 10px; margin: 6px 0; }
         .btn {
-            background: #2d3b52;
-            border: none;
-            border-radius: 60px;
-            padding: 14px 20px;
-            font-size: 16px;
-            font-weight: 600;
-            color: #f8fafc;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            flex: 1 1 auto;
-            min-width: 110px;
-            transition: all 0.15s ease;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-            cursor: pointer;
-            border: 1px solid #475569;
-            touch-action: manipulation;
-            user-select: none;
+            background: #2d3b52; border: 1px solid #475569; border-radius: 60px;
+            padding: 13px 16px; font-size: 15px; font-weight: 600; color: #f8fafc;
+            display: inline-flex; align-items: center; justify-content: center;
+            gap: 8px; flex: 1; transition: all 0.15s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3); cursor: pointer;
+            touch-action: manipulation; user-select: none;
         }
         .btn:active { transform: scale(0.94); }
-        .btn-primary {
-            background: #2563eb;
-            border-color: #3b82f6;
-            color: white;
-        }
-        .btn-primary:active { background: #1d4ed8; }
-        .btn-danger {
-            background: #dc2626;
-            border-color: #ef4444;
-            color: white;
-        }
-        .btn-danger:active { background: #b91c1c; }
-        .btn:disabled {
-            opacity: 0.4;
-            transform: scale(0.96);
-            pointer-events: none;
-            filter: grayscale(0.4);
-        }
-        .btn-share-zip {
-            background: #7c3aed;
-            border-color: #8b5cf6;
-            color: white;
-        }
-        .btn-share-zip:active { background: #6d28d9; }
-        .btn-share-pdf {
-            background: #dc2626;
-            border-color: #ef4444;
-            color: white;
-        }
-        .btn-share-pdf:active { background: #b91c1c; }
-        .btn-share-jpg {
-            background: #16a34a;
-            border-color: #22c55e;
-            color: white;
-        }
-        .btn-share-jpg:active { background: #15803d; }
-        .btn-download-jpg {
-            background: #0ea5e9;
-            border-color: #38bdf8;
-            color: white;
-        }
-        .btn-download-jpg:active { background: #0284c7; }
-        .input-section {
-            margin: 18px 0 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        .input-section label {
-            font-size: 14px;
-            font-weight: 500;
-            color: #cbd5e1;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding-right: 6px;
-        }
-        .input-section label i {
-            font-style: normal;
-            background: #1e293b;
-            padding: 0 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            color: #94a3b8;
-        }
-        .input-field {
-            background: #0f172a;
-            border: 2px solid #2d3b52;
-            border-radius: 60px;
-            padding: 16px 24px;
-            font-size: 20px;
-            font-weight: 600;
-            color: #f1f5f9;
-            outline: none;
-            transition: 0.2s;
-            width: 100%;
-            letter-spacing: 2px;
-            text-align: center;
-            font-family: inherit;
-        }
-        .input-field:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 4px rgba(59,130,246,0.25);
-        }
-        .input-field::placeholder {
-            color: #475569;
-            font-weight: 400;
-            letter-spacing: 0.5px;
-            font-size: 16px;
-        }
-        .status-bar {
-            background: #0f172a;
-            border-radius: 60px;
-            padding: 12px 18px;
-            text-align: center;
-            font-size: 14px;
-            margin: 14px 0 8px;
-            color: #94a3b8;
-            border: 1px solid #2d3b52;
-            min-height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: 0.2s;
-            font-weight: 450;
-            line-height: 1.4;
-        }
-        .status-bar.success {
-            color: #86efac;
-            border-color: #16a34a;
-            background: #0b1f12;
-        }
-        .status-bar.error {
-            color: #fca5a5;
-            border-color: #dc2626;
-            background: #1f0f0f;
-        }
-        .status-bar.info {
-            color: #93c5fd;
-            border-color: #3b82f6;
-            background: #0f1a2e;
-        }
-        .action-row {
-            display: flex;
-            gap: 10px;
-            margin-top: 4px;
-            flex-wrap: wrap;
-        }
-        .action-row .btn {
-            flex: 1;
-            min-width: 0;
-            padding: 14px 10px;
-            font-size: 14px;
-        }
-        .share-row {
-            display: flex;
-            gap: 10px;
-            margin-top: 8px;
-            flex-wrap: wrap;
-        }
-        .share-row .btn {
-            flex: 1;
-            min-width: 0;
-            padding: 14px 10px;
-            font-size: 14px;
-        }
-        .footer-note {
-            text-align: center;
-            font-size: 12px;
-            color: #475569;
-            margin-top: 16px;
-            border-top: 1px solid #1e293b;
-            padding-top: 16px;
-        }
-        .section-label {
-            font-size: 13px;
-            color: #94a3b8;
-            text-align: center;
-            margin: 8px 0 4px;
-            font-weight: 500;
-            letter-spacing: 0.5px;
-        }
-        @media (max-width: 420px) {
-            .app-container { padding: 16px; }
-            .btn { min-width: 80px; padding: 12px 14px; font-size: 14px; }
-            .input-field { font-size: 18px; padding: 14px 16px; }
-            .action-row .btn, .share-row .btn { font-size: 12px; padding: 12px 8px; }
+        .btn:disabled { opacity: 0.35; pointer-events: none; filter: grayscale(0.4); }
+        .btn-primary { background: #2563eb; border-color: #3b82f6; color: white; }
+        .btn-danger { background: #dc2626; border-color: #ef4444; color: white; }
+        .btn-success { background: #16a34a; border-color: #22c55e; color: white; }
+        .btn-purple { background: #7c3aed; border-color: #8b5cf6; color: white; }
+        .btn-edit { background: #0e7490; border-color: #0891b2; color: white; }
+
+        .share-row { display: flex; gap: 8px; margin-top: 6px; }
+        .share-row .btn { font-size: 13px; padding: 12px 10px; }
+        .btn-share-jpg { background: #16a34a; border-color: #22c55e; color: white; }
+        .btn-share-zip { background: #7c3aed; border-color: #8b5cf6; color: white; }
+        .btn-share-pdf { background: #dc2626; border-color: #ef4444; color: white; }
+
+        .section-label { font-size: 12px; color: #64748b; margin: 8px 0 4px; font-weight: 500; }
+        .footer-note { text-align: center; font-size: 11px; color: #475569; margin-top: 14px; border-top: 1px solid #1e293b; padding-top: 12px; }
+
+        @media (max-width: 380px) {
+            .btn { font-size: 13px; padding: 11px 10px; }
+            .share-row .btn { font-size: 12px; padding: 10px 8px; }
         }
     </style>
 </head>
 <body>
-<div class="app-container" role="main">
+<div class="app-container">
     <div class="header">
         <h1><span>📸</span> کد ملی</h1>
-        <div class="badge">iPhone</div>
+        <div class="badge">MMD</div>
     </div>
 
-    <div class="camera-frame">
+    <!-- دوربین -->
+    <div class="camera-frame" id="cameraFrame">
         <video id="video" autoplay playsinline muted></video>
-        <canvas id="photoCanvas"></canvas>
+        <div class="cam-overlay">
+            <div class="zoom-bar">
+                <button class="zoom-btn active" onclick="setZoom(1)" id="z1">1×</button>
+                <button class="zoom-btn" onclick="setZoom(2)" id="z2">2×</button>
+                <button class="zoom-btn" onclick="setZoom(3)" id="z3">3×</button>
+            </div>
+        </div>
     </div>
 
+    <!-- ادیتور -->
+    <div class="editor-frame" id="editorFrame">
+        <canvas id="editCanvas"></canvas>
+        <div class="crop-hint" id="cropHint">بکشید تا کراپ کنید • دوبار ضربه: تأیید</div>
+    </div>
+
+    <!-- گالری -->
+    <div class="gallery-scroll" id="gallery">
+        <div class="gallery-add" id="addPhotoBtn" title="عکس جدید">＋</div>
+    </div>
+
+    <!-- ابزار ادیت -->
+    <div class="edit-tools" id="editTools">
+        <div class="slider-row">
+            <label>روشنایی</label>
+            <input type="range" id="brightness" min="-100" max="100" value="0" oninput="applyFilters()">
+            <span class="slider-val" id="bVal">0</span>
+        </div>
+        <div class="slider-row">
+            <label>کنتراست</label>
+            <input type="range" id="contrast" min="-100" max="100" value="0" oninput="applyFilters()">
+            <span class="slider-val" id="cVal">0</span>
+        </div>
+        <div class="tool-btns">
+            <button class="tool-btn" onclick="rotateImg(-90)">↺ چرخش</button>
+            <button class="tool-btn" onclick="flipImg('h')">↔ فلیپ</button>
+            <button class="tool-btn" onclick="flipImg('v')">↕ فلیپ عمود</button>
+            <button class="tool-btn" id="cropToggleBtn" onclick="toggleCrop()">✂️ کراپ</button>
+            <button class="tool-btn" onclick="resetEdit()">↩ ریست</button>
+        </div>
+    </div>
+
+    <!-- کد ملی -->
     <div class="input-section">
-        <label for="nationalCode">
-            🇮🇷 کد ملی (۱۰ رقم)
-            <i>مثال: ۱۲۳۴۵۶۷۸۹۰</i>
-        </label>
-        <input type="text" id="nationalCode" class="input-field" inputmode="numeric" maxlength="10" placeholder="۱۲۳۴۵۶۷۸۹۰" value="" autocomplete="off">
+        <label>🇮🇷 کد ملی (۱۰ رقم)</label>
+        <input type="text" id="nationalCode" class="input-field" inputmode="numeric" maxlength="10" placeholder="۱۲۳۴۵۶۷۸۹۰" autocomplete="off">
     </div>
 
     <div id="statusMessage" class="status-bar info">📱 درخواست دسترسی به دوربین...</div>
 
+    <!-- دکمه‌های اصلی -->
     <div class="controls-grid">
-        <button id="captureBtn" class="btn btn-primary">📸 عکس بگیر</button>
-        <button id="retakeBtn" class="btn btn-danger" disabled>🔄 دوباره</button>
+        <button id="captureBtn" class="btn btn-primary" disabled>📸 عکس بگیر</button>
+        <button id="editBtn" class="btn btn-edit" disabled onclick="toggleEdit()">✏️ ادیت</button>
+        <button id="retakeBtn" class="btn btn-danger" disabled onclick="showCamera()">🔄 دوربین</button>
     </div>
 
-<div class="section-label">📤 اشتراک‌گذاری (Share)</div>
+    <!-- شیر -->
+    <div class="section-label">📤 اشتراک‌گذاری</div>
     <div class="share-row">
-        <button id="shareJpgBtn" class="btn btn-share-jpg" disabled>🖼️ JPG</button>
-        <button id="shareZipBtn" class="btn btn-share-zip" disabled>📦 ZIP</button>
-        <button id="sharePdfBtn" class="btn btn-share-pdf" disabled>📄 PDF</button>
+        <button id="shareJpgBtn" class="btn btn-share-jpg" disabled onclick="shareJpg()">🖼️ JPG</button>
+        <button id="shareZipBtn" class="btn btn-share-zip" disabled onclick="shareZip()">📦 ZIP</button>
+        <button id="sharePdfBtn" class="btn btn-share-pdf" disabled onclick="sharePdf()">📄 PDF</button>
     </div>
 
-    <div class="footer-note">
-        • عکس با کیفیت بالا • نام فایل: کدملی_تاریخ
-    </div>
+    <div class="footer-note">• نام فایل: کدملی_تاریخ شمسی •</div>
 </div>
 
 <script>
-    (function() {
-        "use strict";
+(function() {
+"use strict";
 
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('photoCanvas');
-        const ctx = canvas.getContext('2d');
-        const nationalCodeInput = document.getElementById('nationalCode');
-        const statusDiv = document.getElementById('statusMessage');
-        const captureBtn = document.getElementById('captureBtn');
-        const retakeBtn = document.getElementById('retakeBtn');
-        
-        // دکمه‌های اشتراک‌گذاری
-        const shareJpgBtn = document.getElementById('shareJpgBtn');
-        const shareZipBtn = document.getElementById('shareZipBtn');
-        const sharePdfBtn = document.getElementById('sharePdfBtn');
+// ===== المان‌ها =====
+const video = document.getElementById('video');
+const editCanvas = document.getElementById('editCanvas');
+const ctx = editCanvas.getContext('2d');
+const galleryEl = document.getElementById('gallery');
+const addPhotoBtn = document.getElementById('addPhotoBtn');
+const statusDiv = document.getElementById('statusMessage');
+const captureBtn = document.getElementById('captureBtn');
+const editBtn = document.getElementById('editBtn');
+const retakeBtn = document.getElementById('retakeBtn');
+const shareJpgBtn = document.getElementById('shareJpgBtn');
+const shareZipBtn = document.getElementById('shareZipBtn');
+const sharePdfBtn = document.getElementById('sharePdfBtn');
+const editTools = document.getElementById('editTools');
+const cameraFrame = document.getElementById('cameraFrame');
+const editorFrame = document.getElementById('editorFrame');
+const cropHint = document.getElementById('cropHint');
+const cropToggleBtn = document.getElementById('cropToggleBtn');
 
-        let mediaStream = null;
-        let isCameraActive = false;
-        let isPhotoTaken = false;
-        let photoDataURL = null;
-        let cameraStarted = false;
+// ===== حالت =====
+let mediaStream = null;
+let photos = []; // [{dataURL, edited}]
+let selectedIdx = -1;
+let editBase = null; // ImageData اصلی
+let rotation = 0;
+let flipH = false, flipV = false;
+let inCrop = false;
+let cropStart = null, cropEnd = null;
+let zoomLevel = 1;
+let zoomTrack = null;
 
-        function setStatus(msg, type = 'info') {
-            statusDiv.textContent = msg;
-            statusDiv.className = 'status-bar';
-            if (type === 'success') statusDiv.classList.add('success');
-            else if (type === 'error') statusDiv.classList.add('error');
-            else if (type === 'info') statusDiv.classList.add('info');
-        }
+// ===== وضعیت =====
+function setStatus(msg, type = 'info') {
+    statusDiv.textContent = msg;
+    statusDiv.className = 'status-bar ' + type;
+}
 
-        function toJalali(gy, gm, gd) {
-            var g_d_m = [0,31,59,90,120,151,181,212,243,273,304,334];
-            var jy = (gy <= 1600) ? 0 : 979;
-            gy -= (gy <= 1600) ? 621 : 1600;
-            var gy2 = (gm > 2) ? (gy + 1) : gy;
-            var days = (365 * gy) + (Math.floor((gy2 + 3) / 4)) - (Math.floor((gy2 + 99) / 100))
-                     + (Math.floor((gy2 + 399) / 400)) - 80 + gd + g_d_m[gm - 1];
-            jy += 33 * Math.floor(days / 12053); days %= 12053;
-            jy += 4 * Math.floor(days / 1461); days %= 1461;
-            if (days > 365) { jy += Math.floor((days - 1) / 365); days = (days - 1) % 365; }
-            var jm = (days < 186) ? 1 + Math.floor(days / 31) : 7 + Math.floor((days - 186) / 30);
-            var jd = 1 + ((days < 186) ? (days % 31) : ((days - 186) % 30));
-            return [jy, jm, jd];
-        }
+// ===== تاریخ شمسی =====
+function toJalali(gy, gm, gd) {
+    var g_d_m = [0,31,59,90,120,151,181,212,243,273,304,334];
+    var jy = (gy <= 1600) ? 0 : 979;
+    gy -= (gy <= 1600) ? 621 : 1600;
+    var gy2 = (gm > 2) ? (gy+1) : gy;
+    var days = (365*gy) + Math.floor((gy2+3)/4) - Math.floor((gy2+99)/100)
+             + Math.floor((gy2+399)/400) - 80 + gd + g_d_m[gm-1];
+    jy += 33*Math.floor(days/12053); days %= 12053;
+    jy += 4*Math.floor(days/1461);   days %= 1461;
+    if (days > 365) { jy += Math.floor((days-1)/365); days = (days-1)%365; }
+    var jm = (days < 186) ? 1+Math.floor(days/31) : 7+Math.floor((days-186)/30);
+    var jd = 1 + ((days < 186) ? days%31 : (days-186)%30);
+    return [jy, jm, jd];
+}
+function getFormattedDate() {
+    const n = new Date();
+    const [jy,jm,jd] = toJalali(n.getFullYear(), n.getMonth()+1, n.getDate());
+    return `${jy}-${String(jm).padStart(2,'0')}-${String(jd).padStart(2,'0')}`;
+}
 
-        function getFormattedDate() {
-            const now = new Date();
-            const [jy, jm, jd] = toJalali(now.getFullYear(), now.getMonth() + 1, now.getDate());
-            return `${jy}-${String(jm).padStart(2,'0')}-${String(jd).padStart(2,'0')}`;
-        }
+// ===== کد ملی =====
+function getNationalCode() { return document.getElementById('nationalCode').value.trim().replace(/\D/g,''); }
+function validateNationalCode() {
+    const c = getNationalCode();
+    if (c.length !== 10) { setStatus('⚠️ کد ملی باید دقیقاً ۱۰ رقم باشد.','error'); return null; }
+    return c;
+}
 
-        function getNationalCode() {
-            let raw = nationalCodeInput.value.trim();
-            raw = raw.replace(/\D/g, '');
-            return raw;
-        }
-
-        function validateNationalCode() {
-            const code = getNationalCode();
-            if (code.length !== 10) {
-                setStatus('⚠️ کد ملی باید دقیقاً ۱۰ رقم باشد.', 'error');
-                return null;
-            }
-            return code;
-        }
-
-        async function startCamera() {
-            try {
-                setStatus('📷 در حال دسترسی به دوربین...', 'info');
-                const constraints = {
-                    video: {
-                        facingMode: { ideal: 'environment' },
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
-                    },
-                    audio: false
-                };
-
-                mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
-                video.srcObject = mediaStream;
-                await video.play();
-
-                const track = mediaStream.getVideoTracks()[0];
-                const settings = track.getSettings();
-                const vw = settings.width || 1280;
-                const vh = settings.height || 720;
-                canvas.width = vw;
-                canvas.height = vh;
-
-                isCameraActive = true;
-                cameraStarted = true;
-                isPhotoTaken = false;
-                photoDataURL = null;
-
-                video.style.display = 'block';
-                canvas.style.display = 'none';
-
-                captureBtn.disabled = false;
-                retakeBtn.disabled = true;
-                
-                // غیرفعال کردن همه دکمه‌ها
-                const allBtns = [shareJpgBtn, shareZipBtn, sharePdfBtn];
-                allBtns.forEach(b => b.disabled = true);
-
-                setStatus('✅ دوربین آماده است. عکس بگیرید.', 'success');
-            } catch (err) {
-                console.error('دوربین خطا:', err);
-                setStatus('❌ دسترسی به دوربین ممکن نیست.', 'error');
-                isCameraActive = false;
-                cameraStarted = false;
-                captureBtn.disabled = true;
-                retakeBtn.disabled = true;
-                const allBtns = [shareJpgBtn, shareZipBtn, sharePdfBtn];
-                allBtns.forEach(b => b.disabled = true);
-            }
-        }
-
-        function stopCameraTracks() {
-            if (mediaStream) {
-                mediaStream.getTracks().forEach(track => track.stop());
-                mediaStream = null;
-            }
-            video.srcObject = null;
-            isCameraActive = false;
-        }
-
-        function capturePhoto() {
-            if (!isCameraActive || !video.videoWidth || !video.videoHeight) {
-                setStatus('⚠️ دوربین آماده نیست.', 'error');
-                return;
-            }
-
-            const vw = video.videoWidth;
-            const vh = video.videoHeight;
-            canvas.width = vw;
-            canvas.height = vh;
-            ctx.drawImage(video, 0, 0, vw, vh);
-
-            photoDataURL = canvas.toDataURL('image/jpeg', 0.95);
-
-            video.style.display = 'none';
-            canvas.style.display = 'block';
-
-            isPhotoTaken = true;
-            
-            // فعال کردن همه دکمه‌ها
-            const allBtns = [shareJpgBtn, shareZipBtn, sharePdfBtn];
-            allBtns.forEach(b => b.disabled = false);
-            
-            retakeBtn.disabled = false;
-            captureBtn.disabled = true;
-
-            setStatus('✅ عکس گرفته شد. کد ملی را وارد و دانلود یا اشتراک‌گذاری کنید.', 'success');
-        }
-
-        function retakePhoto() {
-            if (!isCameraActive || !cameraStarted) {
-                stopCameraTracks();
-                startCamera();
-                return;
-            }
-
-            video.style.display = 'block';
-            canvas.style.display = 'none';
-
-            isPhotoTaken = false;
-            photoDataURL = null;
-            
-            const allBtns = [shareJpgBtn, shareZipBtn, sharePdfBtn];
-            allBtns.forEach(b => b.disabled = true);
-            
-            retakeBtn.disabled = true;
-            captureBtn.disabled = false;
-
-            setStatus('🔄 دوربین فعال. آماده عکس‌برداری.', 'success');
-        }
-
-        // ===== تابع کمکی برای اشتراک‌گذاری =====
-        function shareFile(blob, fileName, fileType) {
-            if (!navigator.share) {
-                setStatus('⚠️ مرورگر شما از اشتراک‌گذاری پشتیبانی نمی‌کند.', 'error');
-                return;
-            }
-
-            const file = new File([blob], fileName, { type: fileType });
-            
-            navigator.share({
-                files: [file],
-                title: fileName
-            }).then(() => {
-                setStatus(`✅ فایل "${fileName}" با موفقیت به اشتراک گذاشته شد.`, 'success');
-            }).catch((err) => {
-                if (err.name !== 'AbortError') {
-                    console.error('Share error:', err);
-                    setStatus('❌ خطا در اشتراک‌گذاری فایل.', 'error');
-                }
-            });
-        }
-
-        // ===== تابع کمکی برای دانلود =====
-        function downloadFile(blob, fileName) {
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = fileName;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            setTimeout(() => URL.revokeObjectURL(link.href), 5000);
-            setStatus(`✅ دانلود: "${fileName}"`, 'success');
-        }
-
-        // ===== تولید فایل‌ها =====
-        function getFileData() {
-            if (!isPhotoTaken || !photoDataURL) {
-                setStatus('⚠️ ابتدا عکس بگیرید.', 'error');
-                return null;
-            }
-            const code = validateNationalCode();
-            if (!code) return null;
-            return { code, datePart: getFormattedDate() };
-        }
-
-        function createJpgBlob() {
-            const base64Data = photoDataURL.split(',')[1];
-            const byteString = atob(base64Data);
-            const bytes = new Uint8Array(byteString.length);
-            for (let i = 0; i < byteString.length; i++) {
-                bytes[i] = byteString.charCodeAt(i);
-            }
-            return new Blob([bytes], { type: 'image/jpeg' });
-        }
-
-        function createZipBlob() {
-            return new Promise((resolve, reject) => {
-                if (typeof JSZip === 'undefined') {
-                    reject(new Error('کتابخانه ZIP بارگذاری نشد.'));
-                    return;
-                }
-                const base64Data = photoDataURL.split(',')[1];
-                const zip = new JSZip();
-                zip.file('photo.jpg', base64Data, { base64: true });
-                zip.generateAsync({ type: 'blob' }).then(resolve).catch(reject);
-            });
-        }
-
-        function createPdfBlob() {
-            return new Promise((resolve, reject) => {
-                if (typeof window.jspdf === 'undefined') {
-                    reject(new Error('کتابخانه PDF بارگذاری نشد.'));
-                    return;
-                }
-                
-                const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-                const pageWidth = pdf.internal.pageSize.getWidth();
-                const pageHeight = pdf.internal.pageSize.getHeight();
-                
-                const img = new Image();
-                img.onload = function() {
-                    const imgRatio = img.width / img.height;
-                    const margin = 20;
-                    const maxWidth = pageWidth - (margin * 2);
-                    const maxHeight = pageHeight - (margin * 2);
-                    
-                    let finalWidth, finalHeight;
-                    if (imgRatio > 1) {
-                        finalWidth = maxWidth;
-                        finalHeight = maxWidth / imgRatio;
-                        if (finalHeight > maxHeight) {
-                            finalHeight = maxHeight;
-                            finalWidth = maxHeight * imgRatio;
-                        }
-                    } else {
-                        finalHeight = maxHeight;
-                        finalWidth = maxHeight * imgRatio;
-                        if (finalWidth > maxWidth) {
-                            finalWidth = maxWidth;
-                            finalHeight = maxWidth / imgRatio;
-                        }
-                    }
-                    
-                    const x = (pageWidth - finalWidth) / 2;
-                    const y = (pageHeight - finalHeight) / 2;
-                    
-                    pdf.addImage(photoDataURL, 'JPEG', x, y, finalWidth, finalHeight);
-                    
-                    const code = getNationalCode();
-                    const datePart = getFormattedDate();
-                    pdf.setFontSize(11);
-                    pdf.setTextColor(80, 80, 80);
-                    const text = `کد ملی: ${code}  |  تاریخ: ${datePart}`;
-                    const textWidth = pdf.getStringUnitWidth(text) * 11 / pdf.internal.scaleFactor;
-                    const textX = (pageWidth - textWidth) / 2;
-                    pdf.text(text, textX, pageHeight - 8);
-                    
-                    resolve(pdf.output('blob'));
-                };
-                img.onerror = () => reject(new Error('بارگذاری تصویر برای PDF失敗'));
-                img.src = photoDataURL;
-            });
-        }
-
-        // ===== دانلودها =====
-        function downloadJpg() {
-            const data = getFileData();
-            if (!data) return;
-            const blob = createJpgBlob();
-            downloadFile(blob, `${data.code}_${data.datePart}.jpg`);
-        }
-
-        function downloadZip() {
-            const data = getFileData();
-            if (!data) return;
-            createZipBlob().then(blob => {
-                downloadFile(blob, `${data.code}_${data.datePart}.zip`);
-            }).catch(err => {
-                setStatus('❌ ' + err.message, 'error');
-            });
-        }
-
-        function downloadPdf() {
-            const data = getFileData();
-            if (!data) return;
-            createPdfBlob().then(blob => {
-                downloadFile(blob, `${data.code}_${data.datePart}.pdf`);
-            }).catch(err => {
-                setStatus('❌ ' + err.message, 'error');
-            });
-        }
-
-        // ===== اشتراک‌گذاری‌ها =====
-        function shareJpg() {
-            const data = getFileData();
-            if (!data) return;
-            const blob = createJpgBlob();
-            shareFile(blob, `${data.code}_${data.datePart}.jpg`, 'image/jpeg');
-        }
-
-        function shareZip() {
-            const data = getFileData();
-            if (!data) return;
-            createZipBlob().then(blob => {
-                shareFile(blob, `${data.code}_${data.datePart}.zip`, 'application/zip');
-            }).catch(err => {
-                setStatus('❌ ' + err.message, 'error');
-            });
-        }
-
-        function sharePdf() {
-            const data = getFileData();
-            if (!data) return;
-            createPdfBlob().then(blob => {
-                shareFile(blob, `${data.code}_${data.datePart}.pdf`, 'application/pdf');
-            }).catch(err => {
-                setStatus('❌ ' + err.message, 'error');
-            });
-        }
-
-        // ===== رویدادها =====
-        captureBtn.addEventListener('click', capturePhoto);
-        retakeBtn.addEventListener('click', retakePhoto);
-        
-shareJpgBtn.addEventListener('click', shareJpg);
-        shareZipBtn.addEventListener('click', shareZip);
-        sharePdfBtn.addEventListener('click', sharePdf);
-
-        nationalCodeInput.addEventListener('input', function() {
-            this.value = this.value.replace(/\D/g, '').slice(0, 10);
+// ===== دوربین =====
+async function startCamera() {
+    try {
+        setStatus('📷 در حال دسترسی به دوربین...','info');
+        mediaStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: {ideal:'environment'}, width:{ideal:1920}, height:{ideal:1080} },
+            audio: false
         });
+        video.srcObject = mediaStream;
+        await video.play();
+        zoomTrack = mediaStream.getVideoTracks()[0];
+        captureBtn.disabled = false;
+        setStatus('✅ دوربین آماده. عکس بگیرید.','success');
+    } catch(e) {
+        setStatus('❌ دسترسی به دوربین ممکن نیست.','error');
+    }
+}
 
-        startCamera();
+function showCamera() {
+    cameraFrame.style.display = 'flex';
+    editorFrame.style.display = 'none';
+    editTools.style.display = 'none';
+    editBtn.disabled = selectedIdx < 0;
+    captureBtn.disabled = false;
+    if (!mediaStream) startCamera();
+    setStatus('📷 دوربین فعال.','info');
+}
 
-        window.addEventListener('beforeunload', function() {
-            stopCameraTracks();
-        });
+function setZoom(level) {
+    zoomLevel = level;
+    ['z1','z2','z3'].forEach((id,i) => document.getElementById(id).classList.toggle('active', i+1===level));
+    if (zoomTrack) {
+        const caps = zoomTrack.getCapabilities();
+        if (caps.zoom) {
+            const maxZ = caps.zoom.max || 3;
+            zoomTrack.applyConstraints({ advanced: [{ zoom: Math.min(level, maxZ) }] }).catch(()=>{});
+        }
+    }
+}
 
-        document.addEventListener('visibilitychange', () => {
-            if (!document.hidden) {
-                if (!isCameraActive && !isPhotoTaken) {
-                    stopCameraTracks();
-                    startCamera();
-                }
-                if (isCameraActive && !mediaStream) {
-                    startCamera();
-                }
-            }
-        });
+// ===== عکس گرفتن =====
+captureBtn.addEventListener('click', () => {
+    if (!video.videoWidth) { setStatus('⚠️ دوربین آماده نیست.','error'); return; }
+    const tmp = document.createElement('canvas');
+    tmp.width = video.videoWidth; tmp.height = video.videoHeight;
+    tmp.getContext('2d').drawImage(video, 0, 0);
+    const dataURL = tmp.toDataURL('image/jpeg', 0.95);
+    photos.push({ dataURL, edited: dataURL });
+    const idx = photos.length - 1;
+    addThumb(dataURL, idx);
+    selectPhoto(idx);
+    setStatus(`✅ عکس ${photos.length} گرفته شد.`,'success');
+});
 
-        video.addEventListener('error', (e) => {
-            setStatus('❌ خطا در پخش ویدیو.', 'error');
-            isCameraActive = false;
-            captureBtn.disabled = true;
-        });
+// ===== گالری =====
+function addThumb(dataURL, idx) {
+    const img = document.createElement('img');
+    img.className = 'gallery-thumb';
+    img.src = dataURL;
+    img.dataset.idx = idx;
+    img.addEventListener('click', () => selectPhoto(parseInt(img.dataset.idx)));
+    galleryEl.insertBefore(img, addPhotoBtn);
+}
 
-        video.addEventListener('loadedmetadata', () => {
-            if (video.videoWidth > 0 && video.videoHeight > 0) {
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                if (!isPhotoTaken) {
-                    setStatus('📷 دوربین آماده است.', 'success');
-                }
-                isCameraActive = true;
-                captureBtn.disabled = false;
-            }
-        });
+function selectPhoto(idx) {
+    selectedIdx = idx;
+    document.querySelectorAll('.gallery-thumb').forEach(t => t.classList.toggle('selected', parseInt(t.dataset.idx)===idx));
+    loadToEditor(photos[idx].edited);
+    editBtn.disabled = false;
+    retakeBtn.disabled = false;
+    updateShareBtns();
+}
 
-        console.log('وب‌اپ عکس با کد ملی آماده است (دانلود + اشتراک‌گذاری)');
+addPhotoBtn.addEventListener('click', showCamera);
+
+// ===== ادیتور =====
+function loadToEditor(dataURL) {
+    const img = new Image();
+    img.onload = () => {
+        editCanvas.width = img.width;
+        editCanvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+        editBase = ctx.getImageData(0, 0, editCanvas.width, editCanvas.height);
+        rotation = 0; flipH = false; flipV = false;
+        document.getElementById('brightness').value = 0;
+        document.getElementById('contrast').value = 0;
+        document.getElementById('bVal').textContent = '0';
+        document.getElementById('cVal').textContent = '0';
+    };
+    img.src = dataURL;
+}
+
+function toggleEdit() {
+    const showing = editorFrame.style.display === 'flex';
+    if (showing) {
+        // ذخیره و برگشت
+        saveEdit();
+        showCamera();
+    } else {
+        cameraFrame.style.display = 'none';
+        editorFrame.style.display = 'flex';
+        editTools.style.display = 'flex';
+        editBtn.textContent = '💾 ذخیره';
+        setStatus('✏️ ادیت عکس را انجام دهید.','info');
+    }
+}
+
+function saveEdit() {
+    if (selectedIdx < 0) return;
+    photos[selectedIdx].edited = editCanvas.toDataURL('image/jpeg', 0.95);
+    // آپدیت تامبنیل
+    const thumbs = document.querySelectorAll('.gallery-thumb');
+    thumbs.forEach(t => { if (parseInt(t.dataset.idx)===selectedIdx) t.src = photos[selectedIdx].edited; });
+    editBtn.textContent = '✏️ ادیت';
+    setStatus('✅ ادیت ذخیره شد.','success');
+    updateShareBtns();
+}
+
+// ===== فیلترها =====
+function applyFilters() {
+    if (!editBase) return;
+    const bv = parseInt(document.getElementById('brightness').value);
+    const cv = parseInt(document.getElementById('contrast').value);
+    document.getElementById('bVal').textContent = bv;
+    document.getElementById('cVal').textContent = cv;
+
+    const tmp = document.createElement('canvas');
+    tmp.width = editBase.width; tmp.height = editBase.height;
+    const tc = tmp.getContext('2d');
+    tc.putImageData(editBase, 0, 0);
+
+    // اعمال ترنسفورم (چرخش/فلیپ)
+    renderTransformed(tmp, bv, cv);
+}
+
+function renderTransformed(srcCanvas, bv, cv) {
+    const w = srcCanvas.width, h = srcCanvas.height;
+    const isRotated90 = rotation % 180 !== 0;
+    const dw = isRotated90 ? h : w;
+    const dh = isRotated90 ? w : h;
+    editCanvas.width = dw; editCanvas.height = dh;
+
+    ctx.save();
+    ctx.translate(dw/2, dh/2);
+    ctx.rotate(rotation * Math.PI / 180);
+    ctx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
+    ctx.drawImage(srcCanvas, -w/2, -h/2);
+    ctx.restore();
+
+    // فیلتر روشنایی/کنتراست
+    const imgData = ctx.getImageData(0, 0, dw, dh);
+    const d = imgData.data;
+    const factor = (259*(cv+255))/(255*(259-cv));
+    for (let i=0; i<d.length; i+=4) {
+        d[i]   = clamp(factor*(d[i]   - 128) + 128 + bv);
+        d[i+1] = clamp(factor*(d[i+1] - 128) + 128 + bv);
+        d[i+2] = clamp(factor*(d[i+2] - 128) + 128 + bv);
+    }
+    ctx.putImageData(imgData, 0, 0);
+}
+
+function clamp(v) { return Math.max(0, Math.min(255, Math.round(v))); }
+
+function rotateImg(deg) {
+    rotation = (rotation + deg + 360) % 360;
+    applyFilters();
+}
+function flipImg(dir) {
+    if (dir==='h') flipH = !flipH;
+    else flipV = !flipV;
+    applyFilters();
+}
+function resetEdit() {
+    rotation = 0; flipH = false; flipV = false;
+    document.getElementById('brightness').value = 0;
+    document.getElementById('contrast').value = 0;
+    document.getElementById('bVal').textContent = '0';
+    document.getElementById('cVal').textContent = '0';
+    if (editBase) { editCanvas.width=editBase.width; editCanvas.height=editBase.height; ctx.putImageData(editBase,0,0); }
+}
+
+// ===== کراپ =====
+function toggleCrop() {
+    inCrop = !inCrop;
+    cropToggleBtn.classList.toggle('active', inCrop);
+    cropHint.style.display = inCrop ? 'block' : 'none';
+    if (!inCrop) { cropStart = null; cropEnd = null; applyFilters(); }
+}
+
+function canvasCoords(e, canvas) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const src = e.touches ? e.touches[0] : e;
+    return { x: (src.clientX - rect.left) * scaleX, y: (src.clientY - rect.top) * scaleY };
+}
+
+editCanvas.addEventListener('mousedown', startCrop);
+editCanvas.addEventListener('touchstart', e => { if(inCrop){e.preventDefault(); startCrop(e);} }, {passive:false});
+editCanvas.addEventListener('mousemove', moveCrop);
+editCanvas.addEventListener('touchmove', e => { if(inCrop){e.preventDefault(); moveCrop(e);} }, {passive:false});
+editCanvas.addEventListener('mouseup', endCrop);
+editCanvas.addEventListener('touchend', e => { if(inCrop) endCrop(e); });
+editCanvas.addEventListener('dblclick', confirmCrop);
+
+function startCrop(e) { if (!inCrop) return; cropStart = canvasCoords(e, editCanvas); }
+function moveCrop(e) {
+    if (!inCrop || !cropStart) return;
+    cropEnd = canvasCoords(e, editCanvas);
+    drawCropOverlay();
+}
+function endCrop(e) { if (inCrop && cropStart) cropEnd = canvasCoords(e.changedTouches ? {clientX:e.changedTouches[0].clientX, clientY:e.changedTouches[0].clientY} : e, editCanvas); }
+function confirmCrop() {
+    if (!inCrop || !cropStart || !cropEnd) return;
+    const x = Math.min(cropStart.x, cropEnd.x);
+    const y = Math.min(cropStart.y, cropEnd.y);
+    const w = Math.abs(cropEnd.x - cropStart.x);
+    const h = Math.abs(cropEnd.y - cropStart.y);
+    if (w < 10 || h < 10) return;
+    const imgData = ctx.getImageData(x, y, w, h);
+    editCanvas.width = w; editCanvas.height = h;
+    ctx.putImageData(imgData, 0, 0);
+    editBase = ctx.getImageData(0, 0, w, h);
+    cropStart = null; cropEnd = null;
+    inCrop = false;
+    cropToggleBtn.classList.remove('active');
+    cropHint.style.display = 'none';
+    setStatus('✅ کراپ انجام شد.','success');
+}
+function drawCropOverlay() {
+    applyFilters();
+    if (!cropStart || !cropEnd) return;
+    const x = Math.min(cropStart.x, cropEnd.x);
+    const y = Math.min(cropStart.y, cropEnd.y);
+    const w = Math.abs(cropEnd.x - cropStart.x);
+    const h = Math.abs(cropEnd.y - cropStart.y);
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    ctx.fillRect(0,0,editCanvas.width,editCanvas.height);
+    ctx.clearRect(x,y,w,h);
+    ctx.strokeStyle = '#3b82f6';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x,y,w,h);
+    ctx.restore();
+}
+
+// ===== شیر =====
+function updateShareBtns() {
+    const has = photos.length > 0 && selectedIdx >= 0;
+    shareJpgBtn.disabled = !has;
+    shareZipBtn.disabled = !has;
+    sharePdfBtn.disabled = !has;
+}
+
+function getCurrentDataURL() {
+    if (selectedIdx < 0) return null;
+    return photos[selectedIdx].edited;
+}
+
+function getFileNames() {
+    const code = validateNationalCode();
+    if (!code) return null;
+    return { code, date: getFormattedDate() };
+}
+
+function shareFile(blob, fileName, type) {
+    if (!navigator.share) { setStatus('⚠️ مرورگر شما از Share پشتیبانی نمی‌کند.','error'); return; }
+    const file = new File([blob], fileName, { type });
+    navigator.share({ files:[file], title: fileName })
+        .then(() => setStatus(`✅ "${fileName}" ارسال شد.`,'success'))
+        .catch(e => { if(e.name!=='AbortError') setStatus('❌ خطا در ارسال.','error'); });
+}
+
+function shareJpg() {
+    const n = getFileNames(); if (!n) return;
+    const d = getCurrentDataURL(); if (!d) return;
+    const bytes = atob(d.split(',')[1]);
+    const arr = new Uint8Array(bytes.length);
+    for (let i=0;i<bytes.length;i++) arr[i]=bytes.charCodeAt(i);
+    shareFile(new Blob([arr],{type:'image/jpeg'}), `${n.code}_${n.date}.jpg`,'image/jpeg');
+}
+
+function shareZip() {
+    const n = getFileNames(); if (!n) return;
+    if (typeof JSZip==='undefined') { setStatus('❌ کتابخانه ZIP بارگذاری نشد.','error'); return; }
+    const zip = new JSZip();
+    photos.forEach((p, i) => {
+        const b64 = p.edited.split(',')[1];
+        zip.file(`photo_${i+1}.jpg`, b64, {base64:true});
+    });
+    zip.generateAsync({type:'blob'}).then(blob => {
+        shareFile(blob, `${n.code}_${n.date}.zip`,'application/zip');
+    });
+}
+
+function sharePdf() {
+    const n = getFileNames(); if (!n) return;
+    if (typeof window.jspdf==='undefined') { setStatus('❌ کتابخانه PDF بارگذاری نشد.','error'); return; }
+    const {jsPDF} = window.jspdf;
+    const pdf = new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    const pw = pdf.internal.pageSize.getWidth();
+    const ph = pdf.internal.pageSize.getHeight();
+
+    const addPage = (idx) => new Promise(res => {
+        if (idx > 0) pdf.addPage();
+        const img = new Image();
+        img.onload = () => {
+            const ratio = img.width/img.height;
+            const margin = 20;
+            const mw = pw-margin*2, mh = ph-margin*2-15;
+            let fw,fh;
+            if (ratio>1) { fw=mw; fh=mw/ratio; if(fh>mh){fh=mh;fw=mh*ratio;} }
+            else { fh=mh; fw=mh*ratio; if(fw>mw){fw=mw;fh=mw/ratio;} }
+            const x=(pw-fw)/2, y=(ph-fh)/2-5;
+            pdf.addImage(photos[idx].edited,'JPEG',x,y,fw,fh);
+            pdf.setFontSize(10); pdf.setTextColor(100,100,100);
+            const txt = `کد ملی: ${n.code}  |  تاریخ: ${n.date}  |  عکس ${idx+1}/${photos.length}`;
+            pdf.text(txt, pw/2, ph-6, {align:'center'});
+            res();
+        };
+        img.src = photos[idx].edited;
+    });
+
+    (async () => {
+        for (let i=0;i<photos.length;i++) await addPage(i);
+        const blob = pdf.output('blob');
+        shareFile(blob, `${n.code}_${n.date}.pdf`,'application/pdf');
     })();
+}
+
+// ===== رویدادها =====
+document.getElementById('nationalCode').addEventListener('input', function() {
+    this.value = this.value.replace(/\D/g,'').slice(0,10);
+});
+
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && !mediaStream && cameraFrame.style.display!=='none') startCamera();
+});
+
+// ===== شروع =====
+startCamera();
+updateShareBtns();
+
+})();
 </script>
 </body>
 </html>
