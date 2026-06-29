@@ -269,10 +269,6 @@
             .btn { min-width: 80px; padding: 12px 14px; font-size: 14px; }
             .input-field { font-size: 18px; padding: 14px 16px; }
         }
-        /* شبیه‌سازی جزئی ناچ آیفون (اختیاری) */
-        .notch-sim {
-            display: none;
-        }
     </style>
 </head>
 <body>
@@ -320,7 +316,7 @@
     </div>
 
     <div class="footer-note">
-        • عکس با کیفیت بالا • نام فایل: کدملی_تاریخ
+        • عکس با کیفیت بالا • نام فایل: کدملی_تاریخ.jpg
     </div>
 </div>
 
@@ -342,9 +338,9 @@
         // ---- state ----
         let mediaStream = null;
         let isCameraActive = false;
-        let isPhotoTaken = false;           // true => عکس در کانوس نمایش داده میشه
-        let photoDataURL = null;            // base64 عکس
-        let photoBlob = null;               // blob عکس برای اشتراک‌گذاری
+        let isPhotoTaken = false;
+        let photoDataURL = null;
+        let photoBlob = null;
         let cameraStarted = false;
 
         // ---- helpers ----
@@ -369,6 +365,25 @@
             return new Blob([u8arr], { type: mime });
         }
 
+        // ---- دریافت کد ملی معتبر ----
+        function getValidNationalCode() {
+            let rawCode = nationalCodeInput.value.trim();
+            rawCode = rawCode.replace(/\D/g, '');
+            if (rawCode.length === 10) {
+                return rawCode;
+            }
+            return null;
+        }
+
+        // ---- ساخت نام فایل با کد ملی و تاریخ ----
+        function generateFileName() {
+            const code = getValidNationalCode();
+            const codePart = code || 'unknown';
+            const now = new Date();
+            const datePart = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+            return `${codePart}_${datePart}.jpg`;
+        }
+
         // ---- راه‌اندازی دوربین ----
         async function startCamera() {
             try {
@@ -386,7 +401,6 @@
                 video.srcObject = mediaStream;
                 await video.play();
 
-                // تنظیم ابعاد canvas با ویدیو
                 const track = mediaStream.getVideoTracks()[0];
                 const settings = track.getSettings();
                 const vw = settings.width || 1280;
@@ -400,7 +414,6 @@
                 photoDataURL = null;
                 photoBlob = null;
 
-                // نمایش ویدیو، مخفی کردن کانوس
                 video.style.display = 'block';
                 canvas.style.display = 'none';
 
@@ -422,7 +435,7 @@
             }
         }
 
-        // ---- توقف دوربین (کمک) ----
+        // ---- توقف دوربین ----
         function stopCameraTracks() {
             if (mediaStream) {
                 mediaStream.getTracks().forEach(track => track.stop());
@@ -445,11 +458,9 @@
             canvas.height = vh;
             ctx.drawImage(video, 0, 0, vw, vh);
 
-            // ذخیره داده با کیفیت بالا
             photoDataURL = canvas.toDataURL('image/jpeg', 0.95);
             photoBlob = dataURLToBlob(photoDataURL);
 
-            // نمایش کانوس، پنهان کردن ویدیو
             video.style.display = 'none';
             canvas.style.display = 'block';
 
@@ -464,14 +475,12 @@
 
         // ---- دوباره (بازگشت به دوربین) ----
         function retakePhoto() {
-            // اگر دوربین فعال نیست، دوباره راه‌اندازی
             if (!isCameraActive || !cameraStarted) {
                 stopCameraTracks();
                 startCamera();
                 return;
             }
 
-            // در غیر این صورت فقط حالت را ریست می‌کنیم
             video.style.display = 'block';
             canvas.style.display = 'none';
 
@@ -493,20 +502,13 @@
                 return;
             }
 
-            // اعتبارسنجی کد ملی: ۱۰ رقم
-            let rawCode = nationalCodeInput.value.trim();
-            rawCode = rawCode.replace(/\D/g, '');
-            if (rawCode.length !== 10) {
+            const code = getValidNationalCode();
+            if (!code) {
                 setStatus('⚠️ کد ملی باید دقیقاً ۱۰ رقم باشد.', 'error');
                 return;
             }
 
-            // ساخت نام فایل
-            const now = new Date();
-            const datePart = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-            const fileName = `${rawCode}_${datePart}.jpg`;
-
-            // دانلود
+            const fileName = generateFileName();
             const link = document.createElement('a');
             link.href = photoDataURL;
             link.download = fileName;
@@ -517,27 +519,26 @@
             setStatus(`✅ دانلود شد: "${fileName}"`, 'success');
         }
 
-        // ---- اشتراک‌گذاری عکس (Web Share API) ----
+        // ---- اشتراک‌گذاری عکس با کد ملی در نام فایل ----
         async function sharePhoto() {
             if (!isPhotoTaken || !photoBlob) {
                 setStatus('⚠️ ابتدا عکس بگیرید.', 'error');
                 return;
             }
 
-            // اعتبارسنجی کد ملی (اختیاری برای اشتراک‌گذاری - اما برای پیام نمایش داده می‌شود)
-            let rawCode = nationalCodeInput.value.trim();
-            rawCode = rawCode.replace(/\D/g, '');
-            const codeDisplay = (rawCode.length === 10) ? rawCode : 'نامشخص';
-
-            // بررسی پشتیبانی از Web Share API
             if (!navigator.share) {
                 setStatus('⚠️ مرورگر از اشتراک‌گذاری پشتیبانی نمی‌کند. از دکمه دانلود استفاده کنید.', 'error');
                 return;
             }
 
+            // دریافت کد ملی برای نام فایل
+            const code = getValidNationalCode();
+            const codeDisplay = code || 'unknown';
+            const fileName = generateFileName();
+
             try {
-                // ساخت فایل برای اشتراک‌گذاری
-                const file = new File([photoBlob], `photo_${codeDisplay}.jpg`, { type: 'image/jpeg' });
+                // ساخت فایل با نام حاوی کد ملی
+                const file = new File([photoBlob], fileName, { type: 'image/jpeg' });
                 const shareData = {
                     title: 'عکس با کد ملی',
                     text: `عکس گرفته شده با کد ملی: ${codeDisplay}`,
@@ -545,10 +546,9 @@
                 };
 
                 await navigator.share(shareData);
-                setStatus('✅ عکس با موفقیت به اشتراک گذاشته شد.', 'success');
+                setStatus(`✅ عکس با نام "${fileName}" به اشتراک گذاشته شد.`, 'success');
             } catch (err) {
                 if (err.name === 'AbortError') {
-                    // کاربر عملیات را لغو کرد
                     setStatus('ℹ️ اشتراک‌گذاری لغو شد.', 'info');
                 } else {
                     console.error('خطا در اشتراک‌گذاری:', err);
@@ -576,17 +576,15 @@
             stopCameraTracks();
         });
 
-        // ---- اگر دوربین به هر دلیل قطع شد (مثلاً در آیفون با سوئیچ اپ) ----
+        // ---- اگر دوربین به هر دلیل قطع شد ----
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
                 // صفحه مخفی شد – کاری نمی‌کنیم
             } else {
-                // برگشت به صفحه: اگر دوربین فعال نیست و عکسی گرفته نشده، دوباره تلاش
                 if (!isCameraActive && !isPhotoTaken) {
                     stopCameraTracks();
                     startCamera();
                 }
-                // اگر دوربین فعال هست ولی استریم قطع شده (مثل خطا) باز هم تلاش
                 if (isCameraActive && !mediaStream) {
                     startCamera();
                 }
@@ -600,7 +598,7 @@
             captureBtn.disabled = true;
         });
 
-        // ---- وقتی ویدیو آماده شد (loadedmetadata) ----
+        // ---- وقتی ویدیو آماده شد ----
         video.addEventListener('loadedmetadata', () => {
             if (video.videoWidth > 0 && video.videoHeight > 0) {
                 canvas.width = video.videoWidth;
@@ -613,7 +611,7 @@
             }
         });
 
-        console.log('وب‌اپ عکس با کد ملی + اشتراک‌گذاری آماده است.');
+        console.log('وب‌اپ عکس با کد ملی + اشتراک‌گذاری با نام فایل آماده است.');
     })();
 </script>
 </body>
